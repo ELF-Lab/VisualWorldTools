@@ -1,0 +1,6 @@
+Exp,1,1,item1cond1,cat.png,dog.png,dog.png,cat.wav
+Exp,1,2,item1cond2,dog.png,cat.png,cat.png,dog.wav
+Exp,2,1,item1cond1,cat.png,dog.png,dog.png,cat.wav
+Exp,2,2,item1cond2,dog.png,cat.png,cat.png,dog.wav
+Filler,3,0,item1cond1,cat.png,dog.png,dog.png,cat.wav
+Filler,4,0,item1cond2,dog.png,cat.png,cat.png,dog.wav

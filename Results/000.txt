@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+# encoding: utf-8
+"""
+setSN.py
+
+Created by michael on 2011-11-27.
+Copyright (c) 2011 LIPS Lab. All rights reserved.
+"""
+
+import sys
+import os
+import bbox as b
+
+def main(argv=sys.argv):
+
+
+    lb=b.bbox()
+    newSN=lb.processSN_to_bytearray(argv[1])
+    lb.openBbox()
+    lb.verbose=True
+    lb.dumpDeviceInfo()
+    lb.setSN(newSN)
+    lb.dumpDeviceInfo()
+    
+    if len(argv)>2:
+        if argv[2]=='t':
+            # buttons testing
+            print 'testing buttons ************* ddd'+'\n'
+            lb.setButtonReportingMask('\x07\x00')
+            for i in range(24):
+                lb.armBBox()
+                x=lb.read(timeout=700000)
+                s=lb.list2str(lb.parseOutput(x))
+                print s+'\n'
+                # time.sleep(0.25)
+
+
+if __name__ == '__main__':
+    main()
