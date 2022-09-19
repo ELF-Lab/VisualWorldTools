@@ -67,7 +67,8 @@ def main():
     for trialNum, item in enumerate(experimental_items):
         print("hello")
         print(trialNum, item)
-        images = [trialNum,item[4],item[5],item[6],item[7]]
+        item_list = item.split(",")
+        images = [trialNum,item_list[4],item_list[5],item_list[6],item_list[7].strip()]
         print(images) #prints to the Output window for testing purposes
         
         response = trial(images)
