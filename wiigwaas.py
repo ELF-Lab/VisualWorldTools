@@ -2,6 +2,7 @@ import os, random, numpy, csv, time
 import psychopy.gui
 from psychopy import visual, monitors, event, core, logging, gui, sound, data
 from CSL import latinSquare as latin_square
+from pathlib import *
 
 # Where do I find the items?
 item_file = open('experimentalItems.csv')
@@ -80,21 +81,21 @@ def trial(images):
     
     
     #Get the images to be displayed for a given trial. Defined in the items file.
-    patient = visual.ImageStim(win=win,image="/Users/christopherhammerly/Desktop/wiigwaas/visualStims/"+str(images[2]) ,units="pix",size=425)
-    agent = visual.ImageStim(win=win,image="/Users/christopherhammerly/Desktop/wiigwaas/visualStims/"+str(images[1]), units="pix",size=425)
-    distractor = visual.ImageStim(win=win,image="/Users/christopherhammerly/Desktop/wiigwaas/visualStims/"+str(images[3]), units="pix",size=425)
+    patient = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[2]),units="pix",size=425)
+    agent = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[1]), units="pix",size=425)
+    distractor = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[3]), units="pix",size=425)
     
-    patientCheck = visual.ImageStim(win=win,image="/Users/christopherhammerly/Desktop/wiigwaas/checkmark.png", units="pix",size=100)
-    agentCheck = visual.ImageStim(win=win,image="/Users/christopherhammerly/Desktop/wiigwaas/checkmark.png", units="pix",size=100)
-    distractorCheck = visual.ImageStim(win=win,image="/Users/christopherhammerly/Desktop/wiigwaas/checkmark.png", units="pix",size=100)
+    patientCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=100)
+    agentCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=100)
+    distractorCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=100)
     
-    repeat = visual.ImageStim(win=win,image="/Users/christopherhammerly/Desktop/wiigwaas/repeat.png", units="pix",size=100)
+    repeat = visual.ImageStim(win=win,image=Path.cwd()/"repeat.png", units="pix",size=100)
     repeat.setPos([-900,-475])
     
     correct = visual.Rect(win = win,lineWidth=2.5, lineColor="#7AC043",units = "pix", size = 900)
     
     #Get the audio to be played for a given trial.
-    audio = sound.Sound('/Users/christopherhammerly/Desktop/wiigwaas/audio/'+str(images[4]))
+    audio = sound.Sound(Path.cwd()/"audio"/str(images[4]))
     
     def playSound():
         audio.play()
