@@ -35,7 +35,7 @@ fixation = visual.TextStim(
     color = "black")
 
 #Define the mouse and the clock
-mouse= event.Mouse(visible = False, win = win)
+mouse= event.Mouse(visible = True, win = win)
 trial_clock = core.Clock()
 
 # Create output file to save data
