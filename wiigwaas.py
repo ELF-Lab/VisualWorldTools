@@ -17,7 +17,9 @@ gui.show()
 subj_id = int(gui.data[0])
 
 #Creating Stimuli and Window
-win = visual.Window([1280, 800], fullscr=True, allowGUI=True, monitor='testMonitor', units='deg',color="white")
+windowWidth = 1280
+windowHeight = 800
+win = visual.Window([windowWidth, windowHeight], fullscr=True, allowGUI=True, monitor='testMonitor', units='deg',color="white")
 
 #Create practice window
 practice = visual.TextStim(win, text='Boozhoo! Biindigen.',pos=(0.0, 0.0), height=1.20, color = "black")
@@ -82,16 +84,18 @@ def trial(images):
     
     
     #Get the images to be displayed for a given trial. Defined in the items file.
-    patient = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[2]),units="pix",size=425)
-    agent = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[1]), units="pix",size=425)
-    distractor = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[3]), units="pix",size=425)
+    imageSize = 425
+    patient = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[2]),units="pix",size=imageSize)
+    agent = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[1]), units="pix",size=imageSize)
+    distractor = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[3]), units="pix",size=imageSize)
     
     patientCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=100)
     agentCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=100)
     distractorCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=100)
     
     repeat = visual.ImageStim(win=win,image=Path.cwd()/"repeat.png", units="pix",size=100)
-    repeat.setPos([-900,-475])
+    bufferSize = min(windowWidth, windowHeight) / 15
+    repeat.setPos([-windowWidth / 2 + bufferSize,-windowHeight / 2 + bufferSize])
     
     correct = visual.Rect(win = win,lineWidth=2.5, lineColor="#7AC043",units = "pix", size = 900)
     
@@ -106,48 +110,57 @@ def trial(images):
     
     #Randomly determining position of agent/patient
     rand = random.randint(0,5)
+
+    #Calculate positions for each image relative to the window
+    xSpacing = (windowWidth / 2) - (imageSize / 2)
+    ySpacing = (windowHeight / 2) - (imageSize / 2)
+    left = -xSpacing
+    right = xSpacing
+    bottom = -ySpacing
+    top = ySpacing
+    centre = 0
     if (rand == 1):
-        patient.setPos([-550,300])
-        patientCheck.setPos([-550,0])
-        agent.setPos([550,300])
-        agentCheck.setPos([550,0])
-        distractor.setPos([0,-300])
-        distractorCheck.setPos([0,0])
+        patient.setPos([left,top])
+        patientCheck.setPos([left,centre])
+        agent.setPos([right,top])
+        agentCheck.setPos([right,centre])
+        distractor.setPos([centre,bottom])
+        distractorCheck.setPos([centre,centre])
     elif (rand == 2):
-        patient.setPos([550,300])
-        patientCheck.setPos([550,0])
-        agent.setPos([-550,300])
-        agentCheck.setPos([-550,0])
-        distractor.setPos([0,-300])
-        distractorCheck.setPos([0,0])
+        patient.setPos([right,top])
+        patientCheck.setPos([right,centre])
+        agent.setPos([left,top])
+        agentCheck.setPos([left,centre])
+        distractor.setPos([centre,bottom])
+        distractorCheck.setPos([centre,centre])
     elif (rand == 3):
-        patient.setPos([-550,300])
-        patientCheck.setPos([-550,0])
-        agent.setPos([0,-300])
-        agentCheck.setPos([0,0])
-        distractor.setPos([550,300])
-        distractorCheck.setPos([550,0])
+        patient.setPos([left,top])
+        patientCheck.setPos([left,centre])
+        agent.setPos([centre,bottom])
+        agentCheck.setPos([centre,centre])
+        distractor.setPos([right,top])
+        distractorCheck.setPos([right,centre])
     elif (rand == 4):
-        patient.setPos([550,300])
-        patientCheck.setPos([550,0])
-        agent.setPos([0,-300])
-        agentCheck.setPos([0,0])
-        distractor.setPos([-550,300])
-        distractorCheck.setPos([-550,0])
+        patient.setPos([right,top])
+        patientCheck.setPos([right,centre])
+        agent.setPos([centre,bottom])
+        agentCheck.setPos([centre,centre])
+        distractor.setPos([left,top])
+        distractorCheck.setPos([left,centre])
     elif (rand == 5):
-        patient.setPos([0,-300])
-        patientCheck.setPos([0,0])
-        agent.setPos([-550,300])
-        agentCheck.setPos([-550,0])
-        distractor.setPos([550,300])
-        distractorCheck.setPos([550,0])
+        patient.setPos([centre,bottom])
+        patientCheck.setPos([centre,centre])
+        agent.setPos([left,top])
+        agentCheck.setPos([left,centre])
+        distractor.setPos([right,top])
+        distractorCheck.setPos([right,centre])
     else:
-        patient.setPos([0,-300])
-        patientCheck.setPos([0,0])
-        agent.setPos([550,300])
-        agentCheck.setPos([550,0])
-        distractor.setPos([-550,300])
-        distractorCheck.setPos([-550,0])
+        patient.setPos([centre,bottom])
+        patientCheck.setPos([centre,centre])
+        agent.setPos([right,top])
+        agentCheck.setPos([right,centre])
+        distractor.setPos([left,top])
+        distractorCheck.setPos([left,centre])
     
     agentPOS = agent.pos
     patientPOS = patient.pos
