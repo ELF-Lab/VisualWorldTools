@@ -19,13 +19,13 @@ subj_id = int(gui.data[0])
 #Creating Stimuli and Window
 windowWidth = 1280
 windowHeight = 800
-win = visual.Window([windowWidth, windowHeight], fullscr=True, allowGUI=True, monitor='testMonitor', units='deg',color="white")
+win = visual.Window([windowWidth, windowHeight], fullscr=True, allowGUI=True, monitor='testMonitor', units='pix',color="white")
 
 #Create practice window
-practice = visual.TextStim(win, text='Boozhoo! Biindigen.',pos=(0.0, 0.0), height=1.20, color = "black")
+practice = visual.TextStim(win, text='Boozhoo! Biindigen.',pos=(0.0, 0.0), height= windowHeight / 20, color = "black")
 
 #Create trial buffer window
-buffer = visual.TextStim(win, text='Tanganan wii-majitaayan mezhinaatebiniwemagak.',pos=(0.0, 0.0), height=1.20, color = "black")
+buffer = visual.TextStim(win, text='Tanganan wii-majitaayan mezhinaatebiniwemagak.',pos=(0.0, 0.0), height= windowHeight / 20, color = "black")
 
 #Create fixation windown
 fixation = visual.TextStim(
@@ -33,7 +33,7 @@ fixation = visual.TextStim(
     text='+',
     pos=(0.0, 0.0),
     bold=True,
-    height=3,
+    height= windowHeight / 10,
     color = "black")
 
 #Define the mouse and the clock
