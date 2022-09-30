@@ -97,7 +97,7 @@ def trial(images):
     bufferSize = min(windowWidth, windowHeight) / 15
     repeat.setPos([-windowWidth / 2 + bufferSize,-windowHeight / 2 + bufferSize])
     
-    correct = visual.Rect(win = win,lineWidth=2.5, lineColor="#7AC043",units = "pix", size = 900)
+    correct = visual.Rect(win = win,lineWidth=2.5, lineColor="#7AC043", fillColor = None, units = "pix", size = imageSize)
     
     #Get the audio to be played for a given trial.
     audio = sound.Sound(Path.cwd()/"audio"/str(images[4]))
