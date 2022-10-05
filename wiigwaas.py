@@ -89,9 +89,10 @@ def trial(images):
     agent = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[1]), units="pix",size=imageSize)
     distractor = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[3]), units="pix",size=imageSize)
     
-    patientCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=100)
-    agentCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=100)
-    distractorCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=100)
+    checkmarkSize = 100
+    patientCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=checkmarkSize)
+    agentCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=checkmarkSize)
+    distractorCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=checkmarkSize)
     
     repeat = visual.ImageStim(win=win,image=Path.cwd()/"repeat.png", units="pix",size=100)
     bufferSize = min(windowWidth, windowHeight) / 15
@@ -119,48 +120,52 @@ def trial(images):
     bottom = -ySpacing
     top = ySpacing
     centre = 0
+    
+    checkOffset = checkmarkSize / 2
+    checkBottomOffset = checkOffset
+    checkTopOffset = -checkOffset
     if (rand == 1):
         patient.setPos([left,top])
-        patientCheck.setPos([left,centre])
+        patientCheck.setPos([left,centre + checkTopOffset])
         agent.setPos([right,top])
-        agentCheck.setPos([right,centre])
+        agentCheck.setPos([right,centre + checkTopOffset])
         distractor.setPos([centre,bottom])
-        distractorCheck.setPos([centre,centre])
+        distractorCheck.setPos([centre,centre + checkBottomOffset])
     elif (rand == 2):
         patient.setPos([right,top])
-        patientCheck.setPos([right,centre])
+        patientCheck.setPos([right,centre + checkTopOffset])
         agent.setPos([left,top])
-        agentCheck.setPos([left,centre])
+        agentCheck.setPos([left,centre + checkTopOffset])
         distractor.setPos([centre,bottom])
-        distractorCheck.setPos([centre,centre])
+        distractorCheck.setPos([centre,centre + checkBottomOffset])
     elif (rand == 3):
         patient.setPos([left,top])
-        patientCheck.setPos([left,centre])
+        patientCheck.setPos([left,centre + checkTopOffset])
         agent.setPos([centre,bottom])
-        agentCheck.setPos([centre,centre])
+        agentCheck.setPos([centre,centre + checkBottomOffset])
         distractor.setPos([right,top])
-        distractorCheck.setPos([right,centre])
+        distractorCheck.setPos([right,centre + checkTopOffset])
     elif (rand == 4):
         patient.setPos([right,top])
-        patientCheck.setPos([right,centre])
+        patientCheck.setPos([right,centre + checkTopOffset])
         agent.setPos([centre,bottom])
-        agentCheck.setPos([centre,centre])
+        agentCheck.setPos([centre,centre + checkBottomOffset])
         distractor.setPos([left,top])
-        distractorCheck.setPos([left,centre])
+        distractorCheck.setPos([left,centre + checkTopOffset])
     elif (rand == 5):
         patient.setPos([centre,bottom])
-        patientCheck.setPos([centre,centre])
+        patientCheck.setPos([centre,centre + checkBottomOffset])
         agent.setPos([left,top])
-        agentCheck.setPos([left,centre])
+        agentCheck.setPos([left,centre + checkTopOffset])
         distractor.setPos([right,top])
-        distractorCheck.setPos([right,centre])
+        distractorCheck.setPos([right,centre + checkTopOffset])
     else:
         patient.setPos([centre,bottom])
-        patientCheck.setPos([centre,centre])
+        patientCheck.setPos([centre,centre + checkBottomOffset])
         agent.setPos([right,top])
-        agentCheck.setPos([right,centre])
+        agentCheck.setPos([right,centre + checkTopOffset])
         distractor.setPos([left,top])
-        distractorCheck.setPos([left,centre])
+        distractorCheck.setPos([left,centre + checkTopOffset])
     
     agentPOS = agent.pos
     patientPOS = patient.pos
