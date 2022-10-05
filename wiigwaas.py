@@ -79,6 +79,7 @@ def main():
         
         #Record the data from the last trial
         data.write(str(subj_id)+"\t"+str(trialNum)+"\t"+str(item[1])+"\t"+str(item[2])+"\t"+str(response)+"\n")
+        data.flush()
 
 def trial(images): 
     
