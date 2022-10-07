@@ -52,8 +52,8 @@ current_list = subj_id % number_lists + \
                ((not subj_id % number_lists) * number_lists)
 
 # Get experimental items and randomize.
-#experimental_items = latin_square(current_list, item_file)
-experimental_items = item_file
+experimental_items = latin_square(current_list, item_file)
+#experimental_items = item_file
 print(experimental_items)
 
 # Clear all stray events and clicks
