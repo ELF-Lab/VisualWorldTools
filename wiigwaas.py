@@ -5,7 +5,8 @@ from CSL import latinSquare as latin_square
 from pathlib import *
 
 # Where do I find the items?
-item_file = open('experimentalItems.csv')
+fileName = 'experimentalItems.csv'
+item_file = open(fileName)
 
 # Number of lists.
 number_lists = 4
@@ -52,7 +53,7 @@ current_list = subj_id % number_lists + \
                ((not subj_id % number_lists) * number_lists)
 
 # Get experimental items and randomize.
-experimental_items = latin_square(current_list, item_file)
+experimental_items = latin_square(current_list, fileName)
 #experimental_items = item_file
 print(experimental_items)
 
@@ -69,8 +70,7 @@ def main():
     for trialNum, item in enumerate(experimental_items):
         print("hello")
         print(trialNum, item)
-        item_list = item.split(",")
-        images = [trialNum,item_list[4],item_list[5],item_list[6],item_list[7].strip()]
+        images = [trialNum,item[4],item[5],item[6],item[7]]
         print(images) #prints to the Output window for testing purposes
         
         response = trial(images)

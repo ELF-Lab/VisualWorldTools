@@ -1,6 +1,6 @@
 ############ Python functions for CSL lab experiments
 
-import csv, random,codecs
+import csv, random, codecs, numpy
 
 #### latinSquare takes an experimental csv file, in the local directory
 #### and returns a shuffled experimental list.
@@ -32,9 +32,10 @@ def latinSquare(curList, itemFile):
 	for expt in experiments:
 		numConditions = int(max([item[1] for item in stimDictionary[expt]]))			## get number of conditions
 		numItems = len(stimDictionary[expt])											## get number of items
-		condSequence = range(1,numConditions+1)*numItems								## generate sequence of conditions
+		condSequence = numpy.tile(range(1,numConditions+1), numItems)								## generate sequence of conditions
 		currentItems = [ (str(item), str(condSequence[(item-1)+(curList-1)]) ) for item in range(1,numItems+1)]	## select appropriate list
-		
+		# currentItems should be lists of Item/Condition pairs like [1,1], [1,2], [2,1], etc.
+
 		### Note that Latin Squaring here works by taking an item number, and looking up the corresponding condition in the 
 		### condSequence list. The starting point in the condition sequence is offset by the curList value. 
 		
@@ -49,7 +50,7 @@ def latinSquare(curList, itemFile):
 
 	experimentalList = []
 	lastExpt = 'NA'
-	remainingExpts = exptItems.keys()
+	remainingExpts = list(exptItems.keys())
 	
 ### Iterate through shuffled lists of sub experiments, popping off elements of those lists and appending them to the final experimentalList
 	
