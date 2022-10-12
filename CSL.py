@@ -1,4 +1,5 @@
-############ Python functions for CSL lab experiments
+############ Originally based on Python2 script by Brian Dillon for UMass CSL Lab (date unknown)
+############ Updated to Python3 for ELF-Lab by Anna Stacey in October 2022
 
 import csv, random, codecs, numpy
 
