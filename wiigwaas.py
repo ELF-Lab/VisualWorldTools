@@ -1,7 +1,7 @@
 import os, random, numpy, csv, time
 import psychopy.gui
 from psychopy import visual, monitors, event, core, logging, gui, sound, data
-from CSL import latinSquare as latin_square
+from randomizer import latinSquare as latin_square
 from pathlib import *
 
 # Where do I find the items?
