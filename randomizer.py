@@ -32,6 +32,9 @@ def latinSquare(curList, itemFile):
 		
 	for expt in experiments:
 		numConditions = int(max([item[1] for item in stimDictionary[expt]]))			## get number of conditions
+		# Check that the provided value for curList is within the expected range
+		assert curList <= numConditions, "Value for curList in latinSquare is higher than permissible."
+		assert curList > 0, "Value for curList in latinSquare is lower than permissible."
 		numItems = len(stimDictionary[expt])											## get number of items
 		condSequence = numpy.tile(range(1,numConditions+1), numItems)								## generate sequence of conditions
 		currentItems = [ (str(item), str(condSequence[(item-1)+(curList-1)]) ) for item in range(1,numItems+1)]	## select appropriate list
@@ -72,6 +75,17 @@ def latinSquare(curList, itemFile):
 	### Randomly insert remaining items
 	for item in exptItems[remainingExpts[0]]:
 		experimentalList.insert(random.randrange(len(experimentalList)+1),[remainingExpts[0]]+item)
-		
+
+	# Safety checks
+	# Ensure that each item/cond matching is as expected based on participant
+	for row in experimentalList:
+		if (row[0] == 'Exp'): # The check isn't relevant for filler rows
+			itemNumber = int(row[1])
+			condNumber = int(row[2])
+			expectedCondNumber = ((itemNumber % numConditions) + curList - 1) % numConditions # Remember that the values of curList range from 1 to the number of conditions
+			if expectedCondNumber == 0:
+				expectedCondNumber = numConditions
+			assert condNumber == expectedCondNumber, f"LatinSquare is not providing the expected condition number for item {itemNumber}. \nExpected condition: {expectedCondNumber}, provided condition: {condNumber}"
+			
 	return experimentalList
 
