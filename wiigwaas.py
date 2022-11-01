@@ -18,15 +18,15 @@ gui.show()
 subj_id = int(gui.data[0])
 
 #Creating Stimuli and Window
-windowWidth = 1280
-windowHeight = 800
+windowWidth = 1920
+windowHeight = 1080
 win = visual.Window([windowWidth, windowHeight], fullscr=True, allowGUI=True, monitor='testMonitor', units='pix',color="white")
 
 #Create practice window
-practice = visual.TextStim(win, text='Boozhoo! Biindigen.',pos=(0.0, 0.0), height= windowHeight / 20, color = "black")
+practice = visual.TextStim(win, text='Boozhoo! Biindigen.',pos=(0.0, 0.0), height= windowHeight / 20, wrapWidth = windowWidth, color = "black")
 
 #Create trial buffer window
-buffer = visual.TextStim(win, text='Tanganan wii-majitaayan mezhinaatebiniwemagak.',pos=(0.0, 0.0), height= windowHeight / 20, color = "black")
+buffer = visual.TextStim(win, text='Tanganan wii-majitaayan\n mezhinaatebiniwemagak.',pos=(0.0, 0.0), height = windowHeight / 20, wrapWidth = windowWidth, color = "black")
 
 #Create fixation windown
 fixation = visual.TextStim(
@@ -116,57 +116,58 @@ def trial(images):
     #Calculate positions for each image relative to the window
     xSpacing = (windowWidth / 2) - (imageSize / 2)
     ySpacing = (windowHeight / 2) - (imageSize / 2)
-    left = -xSpacing
-    right = xSpacing
-    bottom = -ySpacing
-    top = ySpacing
+    offset = 20
+    left = -xSpacing + offset
+    right = xSpacing - offset
+    bottom = -ySpacing + offset
+    top = ySpacing - offset
     centre = 0
+    # Position the checkmarks just above/below the image
+    checkBottom = bottom + imageSize / 2 + checkmarkSize / 2
+    checkTop = top - imageSize / 2 - checkmarkSize / 2
     
-    checkOffset = checkmarkSize / 2
-    checkBottomOffset = checkOffset
-    checkTopOffset = -checkOffset
     if (rand == 1):
         patient.setPos([left,top])
-        patientCheck.setPos([left,centre + checkTopOffset])
+        patientCheck.setPos([left,checkTop])
         agent.setPos([right,top])
-        agentCheck.setPos([right,centre + checkTopOffset])
+        agentCheck.setPos([right,checkTop])
         distractor.setPos([centre,bottom])
-        distractorCheck.setPos([centre,centre + checkBottomOffset])
+        distractorCheck.setPos([centre,checkBottom])
     elif (rand == 2):
         patient.setPos([right,top])
-        patientCheck.setPos([right,centre + checkTopOffset])
+        patientCheck.setPos([right,checkTop])
         agent.setPos([left,top])
-        agentCheck.setPos([left,centre + checkTopOffset])
+        agentCheck.setPos([left,checkTop])
         distractor.setPos([centre,bottom])
-        distractorCheck.setPos([centre,centre + checkBottomOffset])
+        distractorCheck.setPos([centre,checkBottom])
     elif (rand == 3):
         patient.setPos([left,top])
-        patientCheck.setPos([left,centre + checkTopOffset])
+        patientCheck.setPos([left,checkTop])
         agent.setPos([centre,bottom])
-        agentCheck.setPos([centre,centre + checkBottomOffset])
+        agentCheck.setPos([centre,checkBottom])
         distractor.setPos([right,top])
-        distractorCheck.setPos([right,centre + checkTopOffset])
+        distractorCheck.setPos([right,checkTop])
     elif (rand == 4):
         patient.setPos([right,top])
-        patientCheck.setPos([right,centre + checkTopOffset])
+        patientCheck.setPos([right,checkTop])
         agent.setPos([centre,bottom])
-        agentCheck.setPos([centre,centre + checkBottomOffset])
+        agentCheck.setPos([centre,checkBottom])
         distractor.setPos([left,top])
-        distractorCheck.setPos([left,centre + checkTopOffset])
+        distractorCheck.setPos([left,checkTop])
     elif (rand == 5):
         patient.setPos([centre,bottom])
-        patientCheck.setPos([centre,centre + checkBottomOffset])
+        patientCheck.setPos([centre,checkBottom])
         agent.setPos([left,top])
-        agentCheck.setPos([left,centre + checkTopOffset])
+        agentCheck.setPos([left,checkTop])
         distractor.setPos([right,top])
-        distractorCheck.setPos([right,centre + checkTopOffset])
+        distractorCheck.setPos([right,checkTop])
     else:
         patient.setPos([centre,bottom])
-        patientCheck.setPos([centre,centre + checkBottomOffset])
+        patientCheck.setPos([centre,checkBottom])
         agent.setPos([right,top])
-        agentCheck.setPos([right,centre + checkTopOffset])
+        agentCheck.setPos([right,checkTop])
         distractor.setPos([left,top])
-        distractorCheck.setPos([left,centre + checkTopOffset])
+        distractorCheck.setPos([left,checkTop])
     
     agentPOS = agent.pos
     patientPOS = patient.pos
