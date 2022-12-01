@@ -4,6 +4,13 @@ from psychopy import visual, monitors, event, core, logging, gui, sound, data
 from randomizer import latinSquare as latin_square
 from pathlib import *
 
+#Listens for a keyboard shortcut that tells us to quit the experiment
+quit_key = 'escape'
+def quit_check():
+    keys = event.getKeys()
+    if quit_key in keys:
+        core.quit()
+
 # Where do I find the items?
 fileName = 'experimentalItems.csv'
 item_file = open(fileName)
@@ -240,6 +247,8 @@ def trial(images):
 #        win.saveMovieFrames(fileName='trial'+str(images[0])+'.png')
         
         response = []
+    
+        quit_check()
         
         if mouse.isPressedIn(repeat):
             playSound()
@@ -257,7 +266,7 @@ def trial(images):
     event.clearEvents()
 
     while True:
-        
+        quit_check()
         
         if mouse.isPressedIn(repeat):
             playSound()
