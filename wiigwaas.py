@@ -4,6 +4,20 @@ from psychopy import visual, monitors, event, core, logging, gui, sound, data
 from randomizer import latinSquare as latin_square
 from pathlib import *
 
+# Checks for a single tap on an image
+# Does this by asking: has the "mouse" moved? (= yes if a tap was received)
+# And: If so, is the "mouse" within the image?
+def check_for_tap(image, prev_mouse_location):
+    tap_received = False
+    mouse_location = mouse.getPos()
+    # If the mouse moved... (check x and y coords)
+    if not(mouse_location[0] == prev_mouse_location[0] and mouse_location[1] == prev_mouse_location[1]):
+        # If the mouse is within the image...
+        if image.contains(mouse):
+            tap_received = True
+        prev_mouse_location = mouse.getPos() # Update for the next check
+    return tap_received, prev_mouse_location
+
 #Listens for a keyboard shortcut that tells us to quit the experiment
 quit_key = 'escape'
 def quit_check():
@@ -231,6 +245,7 @@ def trial(images):
     #for storing all mouse clicks
     clicks = []
 
+    prev_mouse_location = mouse.getPos()
     #Initiate recording, stop given a touch on the screen
     while mouse.isPressedIn(agent) == 0 and mouse.isPressedIn(patient) == 0 and mouse.isPressedIn(distractor) == 0:
         
@@ -250,7 +265,8 @@ def trial(images):
     
         quit_check()
         
-        if mouse.isPressedIn(repeat):
+        repeat_requested, prev_mouse_location = check_for_tap(repeat, prev_mouse_location)
+        if repeat_requested:
             playSound()
             pic = "replay"
             trialdur = trial_clock.getTime()
