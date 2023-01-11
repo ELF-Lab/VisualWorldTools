@@ -88,45 +88,62 @@ def main():
         practice.draw()
         win.flip()
 
-    for trialNum, item in enumerate(experimental_items):
+    for trialNum, itemInfo in enumerate(experimental_items):
         print("hello")
-        print(trialNum, item)
-        images = [trialNum,item[4],item[5],item[6],item[7]]
-        print(images) #prints to the Output window for testing purposes
+        print(trialNum, itemInfo)
+        imageFileNames = [itemInfo[4], itemInfo[5], itemInfo[6]]
+        audioFileName = itemInfo[7]
+        print(imageFileNames) #prints to the Output window for testing purposes
         
-        response = trial(images)
+        response = trial(imageFileNames, audioFileName)
         
         #print(subj_id,trialNum,response) #prints to the Output window for testing purposes
         
         #Record the data from the last trial
-        data.write(str(subj_id)+"\t"+str(trialNum)+"\t"+str(item[1])+"\t"+str(item[2])+"\t"+str(response)+"\n")
+        data.write(str(subj_id)+"\t"+str(trialNum)+"\t"+str(itemInfo[1])+"\t"+str(itemInfo[2])+"\t"+str(response)+"\n")
         data.flush()
 
-def trial(images): 
-    
-    
-    #Get the images to be displayed for a given trial. Defined in the items file.
+# - Determine the images to be displayed and the audio to be played
+# - Set image positions (randomly)
+# - Diplay the fixation cross, followed by a short delay
+# - Display the images
+# - Play the audio
+# - Display the images again (?)
+# - Await a mouse click in one of the images
+# - If such a click is received, also display the checkmark
+# - If a click is received in a different image, move the checkmark
+# - If a click is received in the checkmark, end the trial
+# Stages: set-up, fixation cross, audio/image display, await initial click, await switch or confirmation click
+
+def trial(imageFileNames, audioFileName):    
     imageSize = 425
-    patient = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[2]),units="pix",size=imageSize)
-    agent = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[1]), units="pix",size=imageSize)
-    distractor = visual.ImageStim(win=win,image=Path.cwd()/"visualStims"/str(images[3]), units="pix",size=imageSize)
-    
     checkmarkSize = 100
-    patientCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=checkmarkSize)
-    agentCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=checkmarkSize)
-    distractorCheck = visual.ImageStim(win=win,image=Path.cwd()/"checkmark.png", units="pix",size=checkmarkSize)
+
+    # Get the images to be displayed for the given trial.
+    def getImages(imageFileNames, imageSize, checkmarkSize):    
+        patient = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[1]), units = "pix", size = imageSize)
+        agent = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[0]), units = "pix", size = imageSize)
+        distractor = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[2]), units = "pix", size = imageSize)
+        
+        patientCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
+        agentCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
+        distractorCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
+        
+        repeatIcon = visual.ImageStim(win = win, image = Path.cwd()/"repeat.png", units = "pix", size = 100)
+        bufferSize = min(windowWidth, windowHeight) / 15
+        repeatIcon.setPos([-windowWidth / 2 + bufferSize,-windowHeight / 2 + bufferSize])
+        
+        selectionBox = visual.Rect(win = win, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = imageSize)
     
-    repeat = visual.ImageStim(win=win,image=Path.cwd()/"repeat.png", units="pix",size=100)
-    bufferSize = min(windowWidth, windowHeight) / 15
-    repeat.setPos([-windowWidth / 2 + bufferSize,-windowHeight / 2 + bufferSize])
-    
-    correct = visual.Rect(win = win,lineWidth=2.5, lineColor="#7AC043", fillColor = None, units = "pix", size = imageSize)
-    
-    #Get the audio to be played for a given trial.
-    audio = sound.Sound(Path.cwd()/"audio"/str(images[4]))
+        return patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox
     
     def playSound():
         audio.play()
+
+    patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox = getImages(imageFileNames, imageSize, checkmarkSize)
+
+    #Get the audio to be played for a given trial.
+    audio = sound.Sound(Path.cwd()/"audio"/str(audioFileName))
     
     #Create variable to store the picture that is chosen
     pic = []
@@ -228,7 +245,7 @@ def trial(images):
         patient.draw()
         agent.draw()
         distractor.draw()
-        repeat.draw()
+        repeatIcon.draw()
         win.flip()
         
     
@@ -255,17 +272,14 @@ def trial(images):
         patient.draw()
         agent.draw()
         distractor.draw()
-        repeat.draw()
+        repeatIcon.draw()
         win.flip()
-        
-#        win.getMovieFrame() 
-#        win.saveMovieFrames(fileName='trial'+str(images[0])+'.png')
         
         response = []
     
         quit_check()
         
-        repeat_requested, prev_mouse_location = check_for_tap(repeat, prev_mouse_location)
+        repeat_requested, prev_mouse_location = check_for_tap(repeatIcon, prev_mouse_location)
         if repeat_requested:
             playSound()
             pic = "replay"
@@ -284,7 +298,7 @@ def trial(images):
     while True:
         quit_check()
         
-        if mouse.isPressedIn(repeat):
+        if mouse.isPressedIn(repeatIcon):
             playSound()
             pic = "replay"
             trialdur = trial_clock.getTime()
@@ -295,21 +309,21 @@ def trial(images):
         if mouse.isPressedIn(agent):
             pic = "agent"
             trialdur = trial_clock.getTime()
-            correct.setPos(agentPOS)
+            selectionBox.setPos(agentPOS)
             check = agentCheck
             response = [pic,trialdur]
             clicks.append(response)
         elif mouse.isPressedIn(patient):
             pic = "patient"
             trialdur = trial_clock.getTime()
-            correct.setPos(patientPOS)
+            selectionBox.setPos(patientPOS)
             check = patientCheck
             response = [pic,trialdur]
             clicks.append(response)
         elif mouse.isPressedIn(distractor):
             pic = "distractor"
             trialdur = trial_clock.getTime()
-            correct.setPos(distractorPOS)
+            selectionBox.setPos(distractorPOS)
             check = distractorCheck
             response = [pic,trialdur]
             clicks.append(response)
@@ -328,9 +342,9 @@ def trial(images):
         patient.draw()
         agent.draw()
         distractor.draw()
-        correct.draw()
+        selectionBox.draw()
         check.draw()
-        repeat.draw()
+        repeatIcon.draw()
         win.flip()
         
     
