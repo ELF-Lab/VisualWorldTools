@@ -30,7 +30,7 @@ fileName = 'experimentalItems.csv'
 item_file = open(fileName)
 
 # Number of lists.
-number_lists = 4
+NUMBER_OF_LISTS = 4
 
 # Dialog box to get subject number
 gui = psychopy.gui.Dlg()
@@ -39,15 +39,15 @@ gui.show()
 subj_id = int(gui.data[0])
 
 #Creating Stimuli and Window
-windowWidth = 1920
-windowHeight = 1080
-win = visual.Window([windowWidth, windowHeight], fullscr=True, allowGUI=True, monitor='testMonitor', units='pix',color="white")
+WINDOW_WIDTH = 1920
+WINDOW_HEIGHT = 1080
+win = visual.Window([WINDOW_WIDTH, WINDOW_HEIGHT], fullscr = True, allowGUI = True, monitor = 'testMonitor', units = 'pix', color = "white")
 
 #Create practice window
-practice = visual.TextStim(win, text='Boozhoo! Biindigen.',pos=(0.0, 0.0), height= windowHeight / 20, wrapWidth = windowWidth, color = "black")
+practice = visual.TextStim(win, text='Boozhoo! Biindigen.',pos=(0.0, 0.0), height= WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
 
 #Create trial buffer window
-bufferScreen = visual.TextStim(win, text='Tanganan wii-majitaayan\n mezhinaatebiniwemagak.',pos=(0.0, 0.0), height = windowHeight / 20, wrapWidth = windowWidth, color = "black")
+bufferScreen = visual.TextStim(win, text = 'Tanganan wii-majitaayan\n mezhinaatebiniwemagak.', pos = (0.0, 0.0), height = WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
 
 #Create fixation windown
 fixationScreen = visual.TextStim(
@@ -55,11 +55,11 @@ fixationScreen = visual.TextStim(
     text = '+',
     pos = (0.0, 0.0),
     bold = True,
-    height = windowHeight / 10,
+    height = WINDOW_HEIGHT / 10,
     color = "black")
 
 #Define the mouse and the clock
-mouse= event.Mouse(visible = True, win = win)
+mouse = event.Mouse(visible = True, win = win)
 trial_clock = core.Clock()
 
 # Create output file to save data
@@ -70,8 +70,8 @@ data.write('subj\ttrial\titem\tcond\tclicks\n')     ## add header
 ##### INITIALIZE THE EXPERIMENT ###############################################
 
 # Calculate current list based on subject number.
-current_list = subj_id % number_lists + \
-               ((not subj_id % number_lists) * number_lists)
+current_list = subj_id % NUMBER_OF_LISTS + \
+               ((not subj_id % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
 
 # Get experimental items and randomize.
 experimental_items = latin_square(current_list, fileName)
@@ -116,107 +116,13 @@ def main():
 # Stages: set-up, fixation cross, audio/image display, await initial click, await switch or confirmation click
 
 def trial(imageFileNames, audioFileName):    
-    imageSize = 425
-    checkmarkSize = 100
-
-    # Get the images to be displayed for the given trial.
-    def getImages(imageFileNames, imageSize, checkmarkSize):    
-        patient = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[1]), units = "pix", size = imageSize)
-        agent = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[0]), units = "pix", size = imageSize)
-        distractor = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[2]), units = "pix", size = imageSize)
-        
-        patientCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
-        agentCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
-        distractorCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
-        
-        repeatIcon = visual.ImageStim(win = win, image = Path.cwd()/"repeat.png", units = "pix", size = 100)
-        bufferSize = min(windowWidth, windowHeight) / 15
-        repeatIcon.setPos([-windowWidth / 2 + bufferSize,-windowHeight / 2 + bufferSize])
-        
-        selectionBox = visual.Rect(win = win, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = imageSize)
-    
-        return patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox
-
-    def setImagePositions():
-        # Randomly determine position of agent/patient
-        rand = random.randint(0,5)
-
-        # Calculate positions for each image relative to the window
-        xSpacing = (windowWidth / 2) - (imageSize / 2)
-        ySpacing = (windowHeight / 2) - (imageSize / 2)
-        offset = 20
-        left = -xSpacing + offset
-        right = xSpacing - offset
-        bottom = -ySpacing + offset
-        top = ySpacing - offset
-        centre = 0
-        # Position the checkmarks just above/below the image
-        checkBottom = bottom + imageSize / 2 + checkmarkSize / 2
-        checkTop = top - imageSize / 2 - checkmarkSize / 2
-        
-        if (rand == 1):
-            patient.setPos([left,top])
-            patientCheck.setPos([left,checkTop])
-            agent.setPos([right,top])
-            agentCheck.setPos([right,checkTop])
-            distractor.setPos([centre,bottom])
-            distractorCheck.setPos([centre,checkBottom])
-        elif (rand == 2):
-            patient.setPos([right,top])
-            patientCheck.setPos([right,checkTop])
-            agent.setPos([left,top])
-            agentCheck.setPos([left,checkTop])
-            distractor.setPos([centre,bottom])
-            distractorCheck.setPos([centre,checkBottom])
-        elif (rand == 3):
-            patient.setPos([left,top])
-            patientCheck.setPos([left,checkTop])
-            agent.setPos([centre,bottom])
-            agentCheck.setPos([centre,checkBottom])
-            distractor.setPos([right,top])
-            distractorCheck.setPos([right,checkTop])
-        elif (rand == 4):
-            patient.setPos([right,top])
-            patientCheck.setPos([right,checkTop])
-            agent.setPos([centre,bottom])
-            agentCheck.setPos([centre,checkBottom])
-            distractor.setPos([left,top])
-            distractorCheck.setPos([left,checkTop])
-        elif (rand == 5):
-            patient.setPos([centre,bottom])
-            patientCheck.setPos([centre,checkBottom])
-            agent.setPos([left,top])
-            agentCheck.setPos([left,checkTop])
-            distractor.setPos([right,top])
-            distractorCheck.setPos([right,checkTop])
-        else:
-            patient.setPos([centre,bottom])
-            patientCheck.setPos([centre,checkBottom])
-            agent.setPos([right,top])
-            agentCheck.setPos([right,checkTop])
-            distractor.setPos([left,top])
-            distractorCheck.setPos([left,checkTop])
-
-        return patient, agent, distractor, patientCheck, agentCheck, distractorCheck
-
-    def displayBufferScreen(bufferScreen):
-        while mouse.getPressed()[0] == 0:
-            bufferScreen.draw()
-            win.flip()
-
-    def displayFixationCrossScreen(fixationScreen):
-        fixationScreen.draw()
-        win.flip()
-        core.wait(1.5) # 1500ms
-        win.flip()     
-
-    def playSound():
-        audio.play()
+    IMAGE_SIZE = 425
+    CHECKMARK_SIZE = 100
 
     # Get the relevant images
-    patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox = getImages(imageFileNames, imageSize, checkmarkSize)
+    patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox = getImages(imageFileNames, IMAGE_SIZE, CHECKMARK_SIZE)
     # Determine the position of each image
-    patient, agent, distractor, patientCheck, agentCheck, distractorCheck = setImagePositions()
+    patient, agent, distractor, patientCheck, agentCheck, distractorCheck = setImagePositions(IMAGE_SIZE, CHECKMARK_SIZE, patient, agent, distractor, patientCheck, agentCheck, distractorCheck)
 
     # Get the audio to be played for the given trial.
     audio = sound.Sound(Path.cwd()/"audio"/str(audioFileName))
@@ -257,7 +163,7 @@ def trial(imageFileNames, audioFileName):
     event.clearEvents()
     
     #Play audio file
-    playSound()
+    playSound(audio)
     
     #RT linked to when audio starts
     trial_clock.reset()
@@ -284,7 +190,7 @@ def trial(imageFileNames, audioFileName):
         
         repeat_requested, prev_mouse_location = check_for_tap(repeatIcon, prev_mouse_location)
         if repeat_requested:
-            playSound()
+            playSound(audio)
             pic = "replay"
             trialdur = trial_clock.getTime()
             response = [pic,trialdur]
@@ -302,7 +208,7 @@ def trial(imageFileNames, audioFileName):
         quit_check()
         
         if mouse.isPressedIn(repeatIcon):
-            playSound()
+            playSound(audio)
             pic = "replay"
             trialdur = trial_clock.getTime()
             response = [pic,trialdur]
@@ -355,6 +261,102 @@ def trial(imageFileNames, audioFileName):
     positions = [agent.pos, distractor.pos, patient.pos]
     return positions, clicks
     #print(clicks)
+
+# *** Functions used inside trial() ***
+
+# Get the images to be displayed for the given trial.
+def getImages(imageFileNames, imageSize, checkmarkSize):    
+    patient = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[1]), units = "pix", size = imageSize)
+    agent = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[0]), units = "pix", size = imageSize)
+    distractor = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[2]), units = "pix", size = imageSize)
+    
+    patientCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
+    agentCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
+    distractorCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
+    
+    repeatIcon = visual.ImageStim(win = win, image = Path.cwd()/"repeat.png", units = "pix", size = 100)
+    bufferSize = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 15
+    repeatIcon.setPos([-WINDOW_WIDTH / 2 + bufferSize,-WINDOW_HEIGHT / 2 + bufferSize])
+    
+    selectionBox = visual.Rect(win = win, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = imageSize)
+
+    return patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox
+
+def setImagePositions(imageSize, checkmarkSize, patient, agent, distractor, patientCheck, agentCheck, distractorCheck):
+    # Randomly determine position of agent/patient
+    rand = random.randint(0,5)
+
+    # Calculate positions for each image relative to the window
+    xSpacing = (WINDOW_WIDTH / 2) - (imageSize / 2)
+    ySpacing = (WINDOW_HEIGHT / 2) - (imageSize / 2)
+    OFFSET_FROM_EDGE = 20
+    left = -xSpacing + OFFSET_FROM_EDGE
+    right = xSpacing - OFFSET_FROM_EDGE
+    bottom = -ySpacing + OFFSET_FROM_EDGE
+    top = ySpacing - OFFSET_FROM_EDGE
+    centre = 0
+    # Position the checkmarks just above/below the image
+    checkBottom = bottom + imageSize / 2 + checkmarkSize / 2
+    checkTop = top - imageSize / 2 - checkmarkSize / 2
+    
+    if (rand == 1):
+        patient.setPos([left, top])
+        patientCheck.setPos([left, checkTop])
+        agent.setPos([right, top])
+        agentCheck.setPos([right, checkTop])
+        distractor.setPos([centre, bottom])
+        distractorCheck.setPos([centre, checkBottom])
+    elif (rand == 2):
+        patient.setPos([right, top])
+        patientCheck.setPos([right, checkTop])
+        agent.setPos([left, top])
+        agentCheck.setPos([left, checkTop])
+        distractor.setPos([centre, bottom])
+        distractorCheck.setPos([centre, checkBottom])
+    elif (rand == 3):
+        patient.setPos([left, top])
+        patientCheck.setPos([left, checkTop])
+        agent.setPos([centre, bottom])
+        agentCheck.setPos([centre, checkBottom])
+        distractor.setPos([right, top])
+        distractorCheck.setPos([right, checkTop])
+    elif (rand == 4):
+        patient.setPos([right, top])
+        patientCheck.setPos([right, checkTop])
+        agent.setPos([centre, bottom])
+        agentCheck.setPos([centre, checkBottom])
+        distractor.setPos([left, top])
+        distractorCheck.setPos([left, checkTop])
+    elif (rand == 5):
+        patient.setPos([centre, bottom])
+        patientCheck.setPos([centre, checkBottom])
+        agent.setPos([left, top])
+        agentCheck.setPos([left, checkTop])
+        distractor.setPos([right, top])
+        distractorCheck.setPos([right, checkTop])
+    else:
+        patient.setPos([centre, bottom])
+        patientCheck.setPos([centre, checkBottom])
+        agent.setPos([right, top])
+        agentCheck.setPos([right, checkTop])
+        distractor.setPos([left, top])
+        distractorCheck.setPos([left, checkTop])
+
+    return patient, agent, distractor, patientCheck, agentCheck, distractorCheck
+
+def displayBufferScreen(bufferScreen):
+    while mouse.getPressed()[0] == 0:
+        bufferScreen.draw()
+        win.flip()
+
+def displayFixationCrossScreen(fixationScreen):
+    fixationScreen.draw()
+    win.flip()
+    core.wait(1.5) # 1500ms
+    win.flip()     
+
+def playSound(audio):
+    audio.play()
 
 ### Run Experiment ###
 main()
