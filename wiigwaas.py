@@ -47,15 +47,15 @@ win = visual.Window([windowWidth, windowHeight], fullscr=True, allowGUI=True, mo
 practice = visual.TextStim(win, text='Boozhoo! Biindigen.',pos=(0.0, 0.0), height= windowHeight / 20, wrapWidth = windowWidth, color = "black")
 
 #Create trial buffer window
-buffer = visual.TextStim(win, text='Tanganan wii-majitaayan\n mezhinaatebiniwemagak.',pos=(0.0, 0.0), height = windowHeight / 20, wrapWidth = windowWidth, color = "black")
+bufferScreen = visual.TextStim(win, text='Tanganan wii-majitaayan\n mezhinaatebiniwemagak.',pos=(0.0, 0.0), height = windowHeight / 20, wrapWidth = windowWidth, color = "black")
 
 #Create fixation windown
-fixation = visual.TextStim(
+fixationScreen = visual.TextStim(
     win,
-    text='+',
-    pos=(0.0, 0.0),
-    bold=True,
-    height= windowHeight / 10,
+    text = '+',
+    pos = (0.0, 0.0),
+    bold = True,
+    height = windowHeight / 10,
     color = "black")
 
 #Define the mouse and the clock
@@ -199,39 +199,41 @@ def trial(imageFileNames, audioFileName):
 
         return patient, agent, distractor, patientCheck, agentCheck, distractorCheck
 
+    def displayBufferScreen(bufferScreen):
+        while mouse.getPressed()[0] == 0:
+            bufferScreen.draw()
+            win.flip()
+
+    def displayFixationCrossScreen(fixationScreen):
+        fixationScreen.draw()
+        win.flip()
+        core.wait(1.5) # 1500ms
+        win.flip()     
+
     def playSound():
         audio.play()
 
     # Get the relevant images
     patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox = getImages(imageFileNames, imageSize, checkmarkSize)
+    # Determine the position of each image
+    patient, agent, distractor, patientCheck, agentCheck, distractorCheck = setImagePositions()
 
     # Get the audio to be played for the given trial.
     audio = sound.Sound(Path.cwd()/"audio"/str(audioFileName))
     
     # Create variable to store the picture that is chosen
     pic = []
-
-    # Determine the position of each image
-    patient, agent, distractor, patientCheck, agentCheck, distractorCheck = setImagePositions()
-    
-    mouse.clickReset()
-    event.clearEvents()
     
     win.flip()
     core.wait(.75)
     
-    #Buffer screen between trials so participant can indicate when ready
-    while mouse.getPressed()[0] == 0:
-        buffer.draw()
-        win.flip()
+    # Buffer screen between trials so participant can indicate when ready
+    displayBufferScreen(bufferScreen)
 
-    #Fixation point in the center of screen for 1500ms
-    fixation.draw()
-    win.flip()
-    core.wait(1.5)
+    # Fixation point in the center of screen for 1500ms
+    displayFixationCrossScreen(fixationScreen)
     
-    #Some extra time so the stimulus appears 100ms after the fixation
-    win.flip()
+    # Some extra time so the stimulus appears 100ms after the fixation
     core.wait(.1)
     
     # timeout variable can be omitted, if you use specific value in the while condition
