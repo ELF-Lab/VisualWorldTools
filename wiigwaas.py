@@ -4,26 +4,6 @@ from psychopy import visual, monitors, event, core, logging, gui, sound, data
 from randomizer import latinSquare as latin_square
 from pathlib import *
 
-# Checks for a single tap on an image
-# Does this by asking: has the "mouse" moved? (= yes if a tap was received)
-# And: If so, is the "mouse" within the image?
-def check_for_tap(image, prev_mouse_location):
-    tap_received = False
-    mouse_location = mouse.getPos()
-    # If the mouse moved... (check x and y coords)
-    if not(mouse_location[0] == prev_mouse_location[0] and mouse_location[1] == prev_mouse_location[1]):
-        # If the mouse is within the image...
-        if image.contains(mouse):
-            tap_received = True
-        prev_mouse_location = mouse.getPos() # Update for the next check
-    return tap_received, prev_mouse_location
-
-#Listens for a keyboard shortcut that tells us to quit the experiment
-quit_key = 'escape'
-def quit_check():
-    keys = event.getKeys()
-    if quit_key in keys:
-        core.quit()
 
 # Where do I find the items?
 fileName = 'experimentalItems.csv'
@@ -118,71 +98,52 @@ def main():
 def trial(imageFileNames, audioFileName):    
     IMAGE_SIZE = 425
     CHECKMARK_SIZE = 100
+    WAIT_TIME_BETWEEN_TRIALS = .75 # in seconds
+    WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI = .1
+    WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO = 4
+
+    # Variables to store the picture that is chosen, and all mouse clicks
+    pic = []
+    clicks = []  
+
+    # Get the audio to be played for the given trial.
+    audio = sound.Sound(Path.cwd()/"audio"/str(audioFileName))
 
     # Get the relevant images
     patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox = getImages(imageFileNames, IMAGE_SIZE, CHECKMARK_SIZE)
     # Determine the position of each image
     patient, agent, distractor, patientCheck, agentCheck, distractorCheck = setImagePositions(IMAGE_SIZE, CHECKMARK_SIZE, patient, agent, distractor, patientCheck, agentCheck, distractorCheck)
 
-    # Get the audio to be played for the given trial.
-    audio = sound.Sound(Path.cwd()/"audio"/str(audioFileName))
-    
-    # Create variable to store the picture that is chosen
-    pic = []
-    
+
+    # *** BEGIN TRIAL ***
+    # Add a wait time before the start of each new trial, with a blank screen
     win.flip()
-    core.wait(.75)
+    core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
-    # Buffer screen between trials so participant can indicate when ready
+    # Display screen between trials so participant can indicate when ready
     displayBufferScreen(bufferScreen)
 
-    # Fixation point in the center of screen for 1500ms
+    # Display point in the center of screen for 1500ms
     displayFixationCrossScreen(fixationScreen)
     
-    # Some extra time so the stimulus appears 100ms after the fixation
-    core.wait(.1)
+    # Pause between displaying the fixation cross and displaying the stimuli
+    core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
-    # timeout variable can be omitted, if you use specific value in the while condition
-    timeout = 4   # [seconds]
-    timeout_start = time.time()
-
-    while time.time() < timeout_start + timeout:
-        
-        
-        
-        #Draw stimuli
-        patient.draw()
-        agent.draw()
-        distractor.draw()
-        repeatIcon.draw()
-        win.flip()
-        
-    
-    #Clear out all of the stuff
+    # Display the images, and then pause before the audio is played
+    draw_stimuli([patient, agent, distractor, repeatIcon])
+    core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
+          
+    # Play the audio file, start the timer and prepare for clicks - the user may interact starting now!
     mouse.clickReset()
     event.clearEvents()
-    
-    #Play audio file
     playSound(audio)
-    
-    #RT linked to when audio starts
     trial_clock.reset()
-    
-    #for storing all mouse clicks
-    clicks = []
+
 
     prev_mouse_location = mouse.getPos()
     #Initiate recording, stop given a touch on the screen
-    while mouse.isPressedIn(agent) == 0 and mouse.isPressedIn(patient) == 0 and mouse.isPressedIn(distractor) == 0:
-        
-        
-        
-        #Draw stimuli
-        patient.draw()
-        agent.draw()
-        distractor.draw()
-        repeatIcon.draw()
-        win.flip()
+    while mouse.isPressedIn(agent) == 0 and mouse.isPressedIn(patient) == 0 and mouse.isPressedIn(distractor) == 0:   
+        draw_stimuli([patient, agent, distractor, repeatIcon])
         
         response = []
     
@@ -248,15 +209,9 @@ def trial(imageFileNames, audioFileName):
         while any(mouse.getPressed()):
             pass
             
-        patient.draw()
-        agent.draw()
-        distractor.draw()
-        selectionBox.draw()
-        check.draw()
-        repeatIcon.draw()
-        win.flip()
-        
+        draw_stimuli([patient, agent, distractor, repeatIcon, selectionBox, check])
     
+
     #Get response
     positions = [agent.pos, distractor.pos, patient.pos]
     return positions, clicks
@@ -357,6 +312,33 @@ def displayFixationCrossScreen(fixationScreen):
 
 def playSound(audio):
     audio.play()
+
+def draw_stimuli(stimuli_list):
+    for stimulus in stimuli_list:
+        stimulus.draw()
+    win.flip()
+
+# Checks for a single tap on an image
+# Does this by asking: has the "mouse" moved? (= yes if a tap was received)
+# And: If so, is the "mouse" within the image?
+def check_for_tap(image, prev_mouse_location):
+    tap_received = False
+    mouse_location = mouse.getPos()
+    # If the mouse moved... (check x and y coords)
+    if not(mouse_location[0] == prev_mouse_location[0] and mouse_location[1] == prev_mouse_location[1]):
+        # If the mouse is within the image...
+        if image.contains(mouse):
+            tap_received = True
+        prev_mouse_location = mouse.getPos() # Update for the next check
+    return tap_received, prev_mouse_location
+
+#Listens for a keyboard shortcut that tells us to quit the experiment
+quit_key = 'escape'
+def quit_check():
+    keys = event.getKeys()
+    if quit_key in keys:
+        core.quit()
+
 
 ### Run Experiment ###
 main()
