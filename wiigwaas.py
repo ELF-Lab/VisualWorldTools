@@ -4,70 +4,43 @@ from psychopy import visual, monitors, event, core, logging, gui, sound, data
 from randomizer import latinSquare as latin_square
 from pathlib import *
 
-
-# Where do I find the items?
-fileName = 'experimentalItems.csv'
-item_file = open(fileName)
-
-# Number of lists.
-NUMBER_OF_LISTS = 4
-
-# Dialog box to get subject number
-gui = psychopy.gui.Dlg()
-gui.addField("Subject ID:")
-gui.show()
-subj_id = int(gui.data[0])
-
-#Creating Stimuli and Window
+# Global constants
 WINDOW_WIDTH = 1920
 WINDOW_HEIGHT = 1080
-win = visual.Window([WINDOW_WIDTH, WINDOW_HEIGHT], fullscr = True, allowGUI = True, monitor = 'testMonitor', units = 'pix', color = "white")
-
-#Create practice window
-practice = visual.TextStim(win, text='Boozhoo! Biindigen.',pos=(0.0, 0.0), height= WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
-
-#Create trial buffer window
-bufferScreen = visual.TextStim(win, text = 'Tanganan wii-majitaayan\n mezhinaatebiniwemagak.', pos = (0.0, 0.0), height = WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
-
-#Create fixation windown
-fixationScreen = visual.TextStim(
-    win,
-    text = '+',
-    pos = (0.0, 0.0),
-    bold = True,
-    height = WINDOW_HEIGHT / 10,
-    color = "black")
-
-#Define the mouse and the clock
-mouse = event.Mouse(visible = True, win = win)
-trial_clock = core.Clock()
-
-# Create output file to save data
-data = open("Wiigwaas-Exp-" + str(subj_id) + ".txt", "w")      ## Open output file channel for editing
-data.write('subj\ttrial\titem\tcond\tclicks\n')     ## add header
-
-
-##### INITIALIZE THE EXPERIMENT ###############################################
-
-# Calculate current list based on subject number.
-current_list = subj_id % NUMBER_OF_LISTS + \
-               ((not subj_id % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
-
-# Get experimental items and randomize.
-experimental_items = latin_square(current_list, fileName)
-#experimental_items = item_file
-print(experimental_items)
-
-# Clear all stray events and clicks
-mouse.clickReset()
-event.clearEvents()
 
 def main():
-    #Display Practice Screen
-    while mouse.getPressed()[0] == 0: #Wait for mouse click to move on
-        practice.draw()
-        win.flip()
+    EXP_ITEMS_FILE_NAME = 'experimentalItems.csv'
+    NUMBER_OF_LISTS = 4
 
+    subjID = displaySubjIDDialog()
+
+    # Define the main window and mouse objects - these are made global so they can be accessed by all functions
+    global mainWindow
+    mainWindow = visual.Window([WINDOW_WIDTH, WINDOW_HEIGHT], fullscr = True, allowGUI = True, monitor = 'testMonitor', units = 'pix', color = "white")
+    global mouse
+    mouse = event.Mouse(visible = True, win = mainWindow)
+
+    outputFile = createOutputFile(subjID)
+
+    # Calculate current list based on subject number.
+    current_list = subjID % NUMBER_OF_LISTS + \
+                ((not subjID % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
+
+    # Get experimental items and randomize.
+    experimental_items = latin_square(current_list, EXP_ITEMS_FILE_NAME)
+    print(experimental_items)
+
+    # Clear all stray events and clicks
+    mouse.clickReset()
+    event.clearEvents()
+
+    # Display practice screen
+    practiceScreen = visual.TextStim(mainWindow, text = 'Boozhoo! Biindigen.', pos = (0.0, 0.0), height = WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
+    while mouse.getPressed()[0] == 0: # Wait for mouse click before moving on
+        practiceScreen.draw()
+        mainWindow.flip()
+
+    # Run trials!
     for trialNum, itemInfo in enumerate(experimental_items):
         print("hello")
         print(trialNum, itemInfo)
@@ -75,13 +48,29 @@ def main():
         audioFileName = itemInfo[7]
         print(imageFileNames) #prints to the Output window for testing purposes
         
-        response = trial(imageFileNames, audioFileName)
+        response = trial(imageFileNames, audioFileName, mainWindow, mouse)
         
         #print(subj_id,trialNum,response) #prints to the Output window for testing purposes
         
         #Record the data from the last trial
-        data.write(str(subj_id)+"\t"+str(trialNum)+"\t"+str(itemInfo[1])+"\t"+str(itemInfo[2])+"\t"+str(response)+"\n")
-        data.flush()
+        outputFile.write(str(subjID)+"\t"+str(trialNum)+"\t"+str(itemInfo[1])+"\t"+str(itemInfo[2])+"\t"+str(response)+"\n")
+        outputFile.flush()
+
+    outputFile.close()
+
+# Create output file to save data
+def createOutputFile(subjID):
+    outputFile = open("Wiigwaas-Exp-" + str(subjID) + ".txt", "w") # Open output file channel for editing
+    outputFile.write('subj\ttrial\titem\tcond\tclicks\n') # Add header
+    return outputFile
+
+# Dialog box to get subject number
+def displaySubjIDDialog():
+    gui = psychopy.gui.Dlg()
+    gui.addField("Subject ID:")
+    gui.show()
+    subj_id = int(gui.data[0])
+    return subj_id
 
 # - Determine the images to be displayed and the audio to be played
 # - Set image positions (randomly)
@@ -95,12 +84,14 @@ def main():
 # - If a click is received in the checkmark, end the trial
 # Stages: set-up, fixation cross, audio/image display, await initial click, await switch or confirmation click
 
-def trial(imageFileNames, audioFileName):    
+def trial(imageFileNames, audioFileName, mainWindow, mouse):    
     IMAGE_SIZE = 425
     CHECKMARK_SIZE = 100
     WAIT_TIME_BETWEEN_TRIALS = .75 # in seconds
     WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI = .1
     WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO = 4
+    
+    trialClock = core.Clock()
 
     # Variables to store the picture that is chosen, and all mouse clicks
     pic = []
@@ -117,14 +108,14 @@ def trial(imageFileNames, audioFileName):
 
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
-    win.flip()
+    mainWindow.flip()
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
     # Display screen between trials so participant can indicate when ready
-    displayBufferScreen(bufferScreen)
+    displayBufferScreen()
 
     # Display point in the center of screen for 1500ms
-    displayFixationCrossScreen(fixationScreen)
+    displayFixationCrossScreen()
     
     # Pause between displaying the fixation cross and displaying the stimuli
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
@@ -137,7 +128,7 @@ def trial(imageFileNames, audioFileName):
     mouse.clickReset()
     event.clearEvents()
     playSound(audio)
-    trial_clock.reset()
+    trialClock.reset()
 
 
     prev_mouse_location = mouse.getPos()
@@ -153,7 +144,7 @@ def trial(imageFileNames, audioFileName):
         if repeat_requested:
             playSound(audio)
             pic = "replay"
-            trialdur = trial_clock.getTime()
+            trialdur = trialClock.getTime()
             response = [pic,trialdur]
             clicks.append(response)
             
@@ -171,35 +162,35 @@ def trial(imageFileNames, audioFileName):
         if mouse.isPressedIn(repeatIcon):
             playSound(audio)
             pic = "replay"
-            trialdur = trial_clock.getTime()
+            trialdur = trialClock.getTime()
             response = [pic,trialdur]
             clicks.append(response)
             
         # Collect which image was pressed
         if mouse.isPressedIn(agent):
             pic = "agent"
-            trialdur = trial_clock.getTime()
+            trialdur = trialClock.getTime()
             selectionBox.setPos(agent.pos)
             check = agentCheck
             response = [pic,trialdur]
             clicks.append(response)
         elif mouse.isPressedIn(patient):
             pic = "patient"
-            trialdur = trial_clock.getTime()
+            trialdur = trialClock.getTime()
             selectionBox.setPos(patient.pos)
             check = patientCheck
             response = [pic,trialdur]
             clicks.append(response)
         elif mouse.isPressedIn(distractor):
             pic = "distractor"
-            trialdur = trial_clock.getTime()
+            trialdur = trialClock.getTime()
             selectionBox.setPos(distractor.pos)
             check = distractorCheck
             response = [pic,trialdur]
             clicks.append(response)
         elif mouse.isPressedIn(check):
             pic = "check"
-            trialdur = trial_clock.getTime()
+            trialdur = trialClock.getTime()
             response = [pic,trialdur]
             clicks.append(response)
             
@@ -221,19 +212,19 @@ def trial(imageFileNames, audioFileName):
 
 # Get the images to be displayed for the given trial.
 def getImages(imageFileNames, imageSize, checkmarkSize):    
-    patient = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[1]), units = "pix", size = imageSize)
-    agent = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[0]), units = "pix", size = imageSize)
-    distractor = visual.ImageStim(win = win, image = Path.cwd()/"visualStims"/str(imageFileNames[2]), units = "pix", size = imageSize)
+    patient = visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[1]), units = "pix", size = imageSize)
+    agent = visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[0]), units = "pix", size = imageSize)
+    distractor = visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[2]), units = "pix", size = imageSize)
     
-    patientCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
-    agentCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
-    distractorCheck = visual.ImageStim(win = win, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
+    patientCheck = visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
+    agentCheck = visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
+    distractorCheck = visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
     
-    repeatIcon = visual.ImageStim(win = win, image = Path.cwd()/"repeat.png", units = "pix", size = 100)
+    repeatIcon = visual.ImageStim(win = mainWindow, image = Path.cwd()/"repeat.png", units = "pix", size = 100)
     bufferSize = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 15
     repeatIcon.setPos([-WINDOW_WIDTH / 2 + bufferSize,-WINDOW_HEIGHT / 2 + bufferSize])
     
-    selectionBox = visual.Rect(win = win, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = imageSize)
+    selectionBox = visual.Rect(win = mainWindow, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = imageSize)
 
     return patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox
 
@@ -299,16 +290,25 @@ def setImagePositions(imageSize, checkmarkSize, patient, agent, distractor, pati
 
     return patient, agent, distractor, patientCheck, agentCheck, distractorCheck
 
-def displayBufferScreen(bufferScreen):
+def displayBufferScreen():
+    bufferScreen = visual.TextStim(mainWindow, text = 'Tanganan wii-majitaayan\n mezhinaatebiniwemagak.', pos = (0.0, 0.0), height = WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
     while mouse.getPressed()[0] == 0:
         bufferScreen.draw()
-        win.flip()
+        mainWindow.flip()
 
-def displayFixationCrossScreen(fixationScreen):
+def displayFixationCrossScreen():
+    fixationScreen = visual.TextStim(
+        mainWindow,
+        text = '+',
+        pos = (0.0, 0.0),
+        bold = True,
+        height = WINDOW_HEIGHT / 10,
+        color = "black")
+
     fixationScreen.draw()
-    win.flip()
+    mainWindow.flip()
     core.wait(1.5) # 1500ms
-    win.flip()     
+    mainWindow.flip()     
 
 def playSound(audio):
     audio.play()
@@ -316,7 +316,7 @@ def playSound(audio):
 def draw_stimuli(stimuli_list):
     for stimulus in stimuli_list:
         stimulus.draw()
-    win.flip()
+    mainWindow.flip()
 
 # Checks for a single tap on an image
 # Does this by asking: has the "mouse" moved? (= yes if a tap was received)
