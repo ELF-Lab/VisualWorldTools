@@ -1,19 +1,18 @@
 import os, random, numpy, csv, time
 import psychopy.gui
-from psychopy import visual, monitors, event, core, logging, gui, sound, data
+from psychopy import visual, event, core, sound
 from randomizer import latinSquare as latin_square
 from pathlib import *
 
-# Global constants
+# Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
 WINDOW_HEIGHT = 1080
 
 def main():
-    EXP_ITEMS_FILE_NAME = 'experimentalItems.csv'
-    NUMBER_OF_LISTS = 4
-
+    # Begin with the dialog for inputting subject ID
     subjID = displaySubjIDDialog()
 
+    # *** SET-UP ***
     # Define the main window and mouse objects - these are made global so they can be accessed by all functions
     global mainWindow
     mainWindow = visual.Window([WINDOW_WIDTH, WINDOW_HEIGHT], fullscr = True, allowGUI = True, monitor = 'testMonitor', units = 'pix', color = "white")
@@ -22,41 +21,38 @@ def main():
 
     outputFile = createOutputFile(subjID)
 
-    # Calculate current list based on subject number.
-    current_list = subjID % NUMBER_OF_LISTS + \
-                ((not subjID % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
+    experimentalItems = getExperimentalItems(subjID)
 
-    # Get experimental items and randomize.
-    experimental_items = latin_square(current_list, EXP_ITEMS_FILE_NAME)
-    print(experimental_items)
+    clearClicksAndEvents()
 
-    # Clear all stray events and clicks
-    mouse.clickReset()
-    event.clearEvents()
-
-    # Display practice screen
-    practiceScreen = visual.TextStim(mainWindow, text = 'Boozhoo! Biindigen.', pos = (0.0, 0.0), height = WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
-    while mouse.getPressed()[0] == 0: # Wait for mouse click before moving on
-        practiceScreen.draw()
-        mainWindow.flip()
+    # *** BEGIN DISPLAY ***
+    # Display practice screen until the user clicks
+    displayPracticeScreen()
 
     # Run trials!
-    for trialNum, itemInfo in enumerate(experimental_items):
-        print("hello")
+    for trialNum, itemInfo in enumerate(experimentalItems):
         print(trialNum, itemInfo)
         imageFileNames = [itemInfo[4], itemInfo[5], itemInfo[6]]
         audioFileName = itemInfo[7]
-        print(imageFileNames) #prints to the Output window for testing purposes
+        print(imageFileNames)
         
         response = trial(imageFileNames, audioFileName, mainWindow, mouse)
-        
-        #print(subj_id,trialNum,response) #prints to the Output window for testing purposes
-        
+                
         #Record the data from the last trial
         outputFile.write(str(subjID)+"\t"+str(trialNum)+"\t"+str(itemInfo[1])+"\t"+str(itemInfo[2])+"\t"+str(response)+"\n")
         outputFile.flush()
 
     outputFile.close()
+
+
+# *** Functions used inside main() ***
+# Dialog box to get subject number
+def displaySubjIDDialog():
+    gui = psychopy.gui.Dlg()
+    gui.addField("Subject ID:")
+    gui.show()
+    subjID = int(gui.data[0])
+    return subjID
 
 # Create output file to save data
 def createOutputFile(subjID):
@@ -64,13 +60,28 @@ def createOutputFile(subjID):
     outputFile.write('subj\ttrial\titem\tcond\tclicks\n') # Add header
     return outputFile
 
-# Dialog box to get subject number
-def displaySubjIDDialog():
-    gui = psychopy.gui.Dlg()
-    gui.addField("Subject ID:")
-    gui.show()
-    subj_id = int(gui.data[0])
-    return subj_id
+def getExperimentalItems(subjID):
+    EXP_ITEMS_FILE_NAME = 'experimentalItems.csv'
+    NUMBER_OF_LISTS = 4
+    
+    # Calculate current list based on subject number.
+    currentList = subjID % NUMBER_OF_LISTS + ((not subjID % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
+
+    # Get experimental items and randomize.
+    experimentalItems = latin_square(currentList, EXP_ITEMS_FILE_NAME)
+    print(experimentalItems)
+    return experimentalItems
+
+def clearClicksAndEvents():
+    mouse.clickReset()
+    event.clearEvents()
+
+def displayPracticeScreen():
+    practiceScreen = visual.TextStim(mainWindow, text = 'Boozhoo! Biindigen.', pos = (0.0, 0.0), height = WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
+    while mouse.getPressed()[0] == 0: # Wait for mouse click before moving on
+        practiceScreen.draw()
+        mainWindow.flip()
+
 
 # - Determine the images to be displayed and the audio to be played
 # - Set image positions (randomly)
@@ -121,26 +132,25 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
     # Display the images, and then pause before the audio is played
-    draw_stimuli([patient, agent, distractor, repeatIcon])
+    drawStimuli([patient, agent, distractor, repeatIcon])
     core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
     # Play the audio file, start the timer and prepare for clicks - the user may interact starting now!
-    mouse.clickReset()
-    event.clearEvents()
+    clearClicksAndEvents()
     playSound(audio)
     trialClock.reset()
 
 
-    prev_mouse_location = mouse.getPos()
+    prevMouseLocation = mouse.getPos()
     #Initiate recording, stop given a touch on the screen
     while mouse.isPressedIn(agent) == 0 and mouse.isPressedIn(patient) == 0 and mouse.isPressedIn(distractor) == 0:   
-        draw_stimuli([patient, agent, distractor, repeatIcon])
+        drawStimuli([patient, agent, distractor, repeatIcon])
         
         response = []
     
-        quit_check()
+        quitCheck()
         
-        repeat_requested, prev_mouse_location = check_for_tap(repeatIcon, prev_mouse_location)
+        repeat_requested, prevMouseLocation = checkForTap(repeatIcon, prevMouseLocation)
         if repeat_requested:
             playSound(audio)
             pic = "replay"
@@ -151,13 +161,11 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
             #This ensures only the initial frame where a mouse is clicked is recorded.
             while any(mouse.getPressed()):
                 pass
-                
-                
-    mouse.clickReset()
-    event.clearEvents()
+                        
+    clearClicksAndEvents()
 
     while True:
-        quit_check()
+        quitCheck()
         
         if mouse.isPressedIn(repeatIcon):
             playSound(audio)
@@ -200,13 +208,14 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
         while any(mouse.getPressed()):
             pass
             
-        draw_stimuli([patient, agent, distractor, repeatIcon, selectionBox, check])
+        drawStimuli([patient, agent, distractor, repeatIcon, selectionBox, check])
     
 
     #Get response
     positions = [agent.pos, distractor.pos, patient.pos]
     return positions, clicks
     #print(clicks)
+
 
 # *** Functions used inside trial() ***
 
@@ -313,7 +322,7 @@ def displayFixationCrossScreen():
 def playSound(audio):
     audio.play()
 
-def draw_stimuli(stimuli_list):
+def drawStimuli(stimuli_list):
     for stimulus in stimuli_list:
         stimulus.draw()
     mainWindow.flip()
@@ -321,22 +330,22 @@ def draw_stimuli(stimuli_list):
 # Checks for a single tap on an image
 # Does this by asking: has the "mouse" moved? (= yes if a tap was received)
 # And: If so, is the "mouse" within the image?
-def check_for_tap(image, prev_mouse_location):
-    tap_received = False
+def checkForTap(image, prevMouseLocation):
+    tapReceived = False
     mouse_location = mouse.getPos()
     # If the mouse moved... (check x and y coords)
-    if not(mouse_location[0] == prev_mouse_location[0] and mouse_location[1] == prev_mouse_location[1]):
+    if not(mouse_location[0] == prevMouseLocation[0] and mouse_location[1] == prevMouseLocation[1]):
         # If the mouse is within the image...
         if image.contains(mouse):
-            tap_received = True
-        prev_mouse_location = mouse.getPos() # Update for the next check
-    return tap_received, prev_mouse_location
+            tapReceived = True
+        prevMouseLocation = mouse.getPos() # Update for the next check
+    return tapReceived, prevMouseLocation
 
 #Listens for a keyboard shortcut that tells us to quit the experiment
-quit_key = 'escape'
-def quit_check():
+quitKey = 'escape'
+def quitCheck():
     keys = event.getKeys()
-    if quit_key in keys:
+    if quitKey in keys:
         core.quit()
 
 
