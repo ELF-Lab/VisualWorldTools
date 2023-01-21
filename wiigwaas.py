@@ -145,6 +145,8 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
 
     # Now, we've received a first click on one of the images
     check = stimuliClicked(agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks)
+    while any(mouse.getPressed()): # Wait for this first click to finish
+        pass
 
     # Now we wait in this loop until the checkmark is ultimately clicked
     while checkForClick([check]) == None:
