@@ -104,10 +104,6 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     
     trialClock = core.Clock()
 
-    # Variables to store the picture that is chosen, and all mouse clicks
-    pic = []
-    clicks = []  
-
     # Get the audio to be played for the given trial.
     audio = sound.Sound(Path.cwd()/"audio"/str(audioFileName))
 
@@ -135,86 +131,46 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     drawStimuli([patient, agent, distractor, repeatIcon])
     core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
-    # Play the audio file, start the timer and prepare for clicks - the user may interact starting now!
+    # Prepare for clicks, play the audio file, and start the timer - the user may interact starting now!
     clearClicksAndEvents()
+    clicks = []
     playSound(audio)
     trialClock.reset()
 
+    # We wait in this loop until we have a first click on one of the 3 images
+    while checkForClick([patient, agent, distractor]) == None:
+        # Always be listening for a command to quit the program, or repeat the audio          
+        listenForQuit()     
+        listenForRepeat(repeatIcon, audio, trialClock, clicks)
 
-    prevMouseLocation = mouse.getPos()
-    #Initiate recording, stop given a touch on the screen
-    while mouse.isPressedIn(agent) == 0 and mouse.isPressedIn(patient) == 0 and mouse.isPressedIn(distractor) == 0:   
-        drawStimuli([patient, agent, distractor, repeatIcon])
-        
-        response = []
-    
-        quitCheck()
-        
-        repeat_requested, prevMouseLocation = checkForTap(repeatIcon, prevMouseLocation)
-        if repeat_requested:
-            playSound(audio)
-            pic = "replay"
-            trialdur = trialClock.getTime()
-            response = [pic,trialdur]
-            clicks.append(response)
-            
-            #This ensures only the initial frame where a mouse is clicked is recorded.
-            while any(mouse.getPressed()):
-                pass
-                        
-    clearClicksAndEvents()
+    # Now, we've received a first click on one of the images
+    check = stimuliClicked(agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks)
 
-    while True:
-        quitCheck()
+    # Now we wait in this loop until the checkmark is ultimately clicked
+    while checkForClick([check]) == None:
+        clickReceived = False
         
-        if mouse.isPressedIn(repeatIcon):
-            playSound(audio)
-            pic = "replay"
-            trialdur = trialClock.getTime()
-            response = [pic,trialdur]
-            clicks.append(response)
-            
-        # Collect which image was pressed
-        if mouse.isPressedIn(agent):
-            pic = "agent"
-            trialdur = trialClock.getTime()
-            selectionBox.setPos(agent.pos)
-            check = agentCheck
-            response = [pic,trialdur]
-            clicks.append(response)
-        elif mouse.isPressedIn(patient):
-            pic = "patient"
-            trialdur = trialClock.getTime()
-            selectionBox.setPos(patient.pos)
-            check = patientCheck
-            response = [pic,trialdur]
-            clicks.append(response)
-        elif mouse.isPressedIn(distractor):
-            pic = "distractor"
-            trialdur = trialClock.getTime()
-            selectionBox.setPos(distractor.pos)
-            check = distractorCheck
-            response = [pic,trialdur]
-            clicks.append(response)
-        elif mouse.isPressedIn(check):
-            pic = "check"
-            trialdur = trialClock.getTime()
-            response = [pic,trialdur]
-            clicks.append(response)
-            
-            break
+        # Always be listening for a command to quit the program, or repeat the audio  
+        listenForQuit()
+        clickReceived = listenForRepeat(repeatIcon, audio, trialClock, clicks)
         
-        #This ensures only the initial frame where a mouse is clicked is recorded
-        while any(mouse.getPressed()):
+        # Always listening for a click on an image
+        if checkForClick([patient, agent, distractor]) != None:
+            check = stimuliClicked(agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks)
+            clickReceived = True
+
+        # The following prevents input from being received over and over (i.e. for the duration of a click)
+        # "If we already accounted for this click, just loop here until the click is finished so we don't count it again"
+        while any(mouse.getPressed()) and clickReceived:
             pass
-            
-        drawStimuli([patient, agent, distractor, repeatIcon, selectionBox, check])
-    
+           
+    # Once we reach here, the check has been clicked (i.e. the trial is over)
+    trialDur = trialClock.getTime()
+    response = ["check", trialDur]
+    clicks.append(response)
 
-    #Get response
     positions = [agent.pos, distractor.pos, patient.pos]
     return positions, clicks
-    #print(clicks)
 
 
 # *** Functions used inside trial() ***
@@ -341,12 +297,62 @@ def checkForTap(image, prevMouseLocation):
         prevMouseLocation = mouse.getPos() # Update for the next check
     return tapReceived, prevMouseLocation
 
+# Returns None if no image clicked, otherwise returns the clicked image
+def checkForClick(images):
+    clickedImage = None
+    for image in images:
+        if mouse.isPressedIn(image):
+            clickedImage = image
+    return clickedImage
+
 #Listens for a keyboard shortcut that tells us to quit the experiment
-quitKey = 'escape'
-def quitCheck():
+def listenForQuit():
+    quitKey = 'escape'
     keys = event.getKeys()
     if quitKey in keys:
         core.quit()
+
+def listenForRepeat(repeatIcon, audio, trialClock, clicks):
+    clickReceived = False
+    if checkForClick([repeatIcon]) != None:
+        playSound(audio)
+        pic = "replay"
+        trialDur = trialClock.getTime()
+        response = [pic, trialDur]
+        clicks.append(response)
+        clickReceived = True
+    
+    return clickReceived
+
+    # repeat_requested, prevMouseLocation = checkForTap(repeatIcon, prevMouseLocation)
+    # if repeat_requested:
+    #     playSound(audio)
+    #     pic = "replay"
+    #     trialDur = trialClock.getTime()
+    #     response = [pic,trialDur]
+    #     clicks.append(response)
+
+def stimuliClicked(agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks):
+    # We received a click on a stimulus! Which one?
+    clickedImage = checkForClick([patient, agent, distractor])
+    trialDur = trialClock.getTime()
+    selectionBox.setPos(clickedImage.pos)
+    if clickedImage == agent:
+        pic = "agent"
+        check = agentCheck
+    elif clickedImage == patient:
+        pic = "patient"
+        check = patientCheck
+    elif clickedImage == distractor:
+        pic = "distractor"
+        check = distractorCheck
+    response = [pic, trialDur]
+    clicks.append(response)
+
+    # Re-draw to include the selection box and checkmark
+    drawStimuli([patient, agent, distractor, repeatIcon, selectionBox, check])
+    
+    return check
 
 
 ### Run Experiment ###
