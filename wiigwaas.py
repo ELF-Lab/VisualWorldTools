@@ -1,8 +1,8 @@
-import os, random, numpy, csv, time
-import psychopy.gui
-from psychopy import visual, event, core, sound
-from randomizer import latinSquare as latin_square
+import random
 from pathlib import *
+from psychopy import visual, event, core, sound
+from randomizer import latinSquare
+from psychopy_resources import checkForClick, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, listenForQuit
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
@@ -26,8 +26,8 @@ def main():
     clearClicksAndEvents()
 
     # *** BEGIN DISPLAY ***
-    # Display practice screen until the user clicks
-    displayPracticeScreen()
+    # Display welcome screen until the user clicks
+    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.')
 
     # Run trials!
     for trialNum, itemInfo in enumerate(experimentalItems):
@@ -46,13 +46,6 @@ def main():
 
 
 # *** Functions used inside main() ***
-# Dialog box to get subject number
-def displaySubjIDDialog():
-    gui = psychopy.gui.Dlg()
-    gui.addField("Subject ID:")
-    gui.show()
-    subjID = int(gui.data[0])
-    return subjID
 
 # Create output file to save data
 def createOutputFile(subjID):
@@ -68,20 +61,13 @@ def getExperimentalItems(subjID):
     currentList = subjID % NUMBER_OF_LISTS + ((not subjID % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
 
     # Get experimental items and randomize.
-    experimentalItems = latin_square(currentList, EXP_ITEMS_FILE_NAME)
+    experimentalItems = latinSquare(currentList, EXP_ITEMS_FILE_NAME)
     print(experimentalItems)
     return experimentalItems
 
 def clearClicksAndEvents():
     mouse.clickReset()
     event.clearEvents()
-
-def displayPracticeScreen():
-    practiceScreen = visual.TextStim(mainWindow, text = 'Boozhoo! Biindigen.', pos = (0.0, 0.0), height = WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
-    while mouse.getPressed()[0] == 0: # Wait for mouse click before moving on
-        practiceScreen.draw()
-        mainWindow.flip()
-
 
 # - Determine the images to be displayed and the audio to be played
 # - Set image positions (randomly)
@@ -101,6 +87,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     WAIT_TIME_BETWEEN_TRIALS = .75 # in seconds
     WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI = .1
     WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO = 4
+    BUFFER_TEXT = 'Tanganan wii-majitaayan\n mezhinaatebiniwemagak.'
     
     trialClock = core.Clock()
 
@@ -119,10 +106,10 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
     # Display screen between trials so participant can indicate when ready
-    displayBufferScreen()
+    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, BUFFER_TEXT)
 
     # Display point in the center of screen for 1500ms
-    displayFixationCrossScreen()
+    displayFixationCrossScreen(mainWindow, WINDOW_HEIGHT)
     
     # Pause between displaying the fixation cross and displaying the stimuli
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
@@ -138,7 +125,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     trialClock.reset()
 
     # We wait in this loop until we have a first click on one of the 3 images
-    while checkForClick([patient, agent, distractor]) == None:
+    while checkForClick(mouse, [patient, agent, distractor]) == None:
         # Always be listening for a command to quit the program, or repeat the audio          
         listenForQuit()     
         listenForRepeat(repeatIcon, audio, trialClock, clicks)
@@ -149,7 +136,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
         pass
 
     # Now we wait in this loop until the checkmark is ultimately clicked
-    while checkForClick([check]) == None:
+    while checkForClick(mouse, [check]) == None:
         clickReceived = False
         
         # Always be listening for a command to quit the program, or repeat the audio  
@@ -157,7 +144,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
         clickReceived = listenForRepeat(repeatIcon, audio, trialClock, clicks)
         
         # Always listening for a click on an image
-        if checkForClick([patient, agent, distractor]) != None:
+        if checkForClick(mouse, [patient, agent, distractor]) != None:
             check = stimuliClicked(agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks)
             clickReceived = True
 
@@ -255,27 +242,7 @@ def setImagePositions(imageSize, checkmarkSize, patient, agent, distractor, pati
         distractor.setPos([left, top])
         distractorCheck.setPos([left, checkTop])
 
-    return patient, agent, distractor, patientCheck, agentCheck, distractorCheck
-
-def displayBufferScreen():
-    bufferScreen = visual.TextStim(mainWindow, text = 'Tanganan wii-majitaayan\n mezhinaatebiniwemagak.', pos = (0.0, 0.0), height = WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
-    while mouse.getPressed()[0] == 0:
-        bufferScreen.draw()
-        mainWindow.flip()
-
-def displayFixationCrossScreen():
-    fixationScreen = visual.TextStim(
-        mainWindow,
-        text = '+',
-        pos = (0.0, 0.0),
-        bold = True,
-        height = WINDOW_HEIGHT / 10,
-        color = "black")
-
-    fixationScreen.draw()
-    mainWindow.flip()
-    core.wait(1.5) # 1500ms
-    mainWindow.flip()     
+    return patient, agent, distractor, patientCheck, agentCheck, distractorCheck  
 
 def playSound(audio):
     audio.play()
@@ -299,24 +266,9 @@ def checkForTap(image, prevMouseLocation):
         prevMouseLocation = mouse.getPos() # Update for the next check
     return tapReceived, prevMouseLocation
 
-# Returns None if no image clicked, otherwise returns the clicked image
-def checkForClick(images):
-    clickedImage = None
-    for image in images:
-        if mouse.isPressedIn(image):
-            clickedImage = image
-    return clickedImage
-
-#Listens for a keyboard shortcut that tells us to quit the experiment
-def listenForQuit():
-    quitKey = 'escape'
-    keys = event.getKeys()
-    if quitKey in keys:
-        core.quit()
-
 def listenForRepeat(repeatIcon, audio, trialClock, clicks):
     clickReceived = False
-    if checkForClick([repeatIcon]) != None:
+    if checkForClick(mouse, [repeatIcon]) != None:
         playSound(audio)
         pic = "replay"
         trialDur = trialClock.getTime()
@@ -336,7 +288,7 @@ def listenForRepeat(repeatIcon, audio, trialClock, clicks):
 
 def stimuliClicked(agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks):
     # We received a click on a stimulus! Which one?
-    clickedImage = checkForClick([patient, agent, distractor])
+    clickedImage = checkForClick(mouse, [patient, agent, distractor])
     trialDur = trialClock.getTime()
     selectionBox.setPos(clickedImage.pos)
     if clickedImage == agent:
