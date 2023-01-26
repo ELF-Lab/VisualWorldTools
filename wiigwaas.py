@@ -69,18 +69,16 @@ def clearClicksAndEvents():
     mouse.clickReset()
     event.clearEvents()
 
+# What happens in a trial?
 # - Determine the images to be displayed and the audio to be played
 # - Set image positions (randomly)
-# - Diplay the fixation cross, followed by a short delay
+# - Diplay the buffer and fixation cross screens
 # - Display the images
 # - Play the audio
-# - Display the images again (?)
 # - Await a mouse click in one of the images
-# - If such a click is received, also display the checkmark
-# - If a click is received in a different image, move the checkmark
-# - If a click is received in the checkmark, end the trial
-# Stages: set-up, fixation cross, audio/image display, await initial click, await switch or confirmation click
-
+# - If such a click is received, also display the checkmark/box
+# - If a click is then received in a different image, move the checkmark/box
+# - If a click is then received in the checkmark, end the trial
 def trial(imageFileNames, audioFileName, mainWindow, mouse):    
     IMAGE_SIZE = 425
     CHECKMARK_SIZE = 100
@@ -98,7 +96,6 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox = getImages(imageFileNames, IMAGE_SIZE, CHECKMARK_SIZE)
     # Determine the position of each image
     patient, agent, distractor, patientCheck, agentCheck, distractorCheck = setImagePositions(IMAGE_SIZE, CHECKMARK_SIZE, patient, agent, distractor, patientCheck, agentCheck, distractorCheck)
-
 
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
