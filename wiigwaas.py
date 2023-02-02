@@ -7,7 +7,7 @@ from psychopy_resources import checkForInput, displayBufferScreen, displayFixati
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
 WINDOW_HEIGHT = 1080
-USING_MOUSE = True
+USER_INPUT_DEVICE = 'mouse' # or 'touch'
 
 def main():
     # Begin with the dialog for inputting subject ID
@@ -129,7 +129,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
         # Always be listening for a command to quit the program, or repeat the audio          
         listenForQuit()     
         prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks)
-        imageClicked, prevMouseLocation = checkForInput(mouse, [patient, agent, distractor], prevMouseLocation, USING_MOUSE)
+        imageClicked, prevMouseLocation = checkForInput(mouse, [patient, agent, distractor], prevMouseLocation, USER_INPUT_DEVICE)
 
     # Now, we've received a first click on one of the images
     check = handleStimuliClick(imageClicked, agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks)
@@ -143,12 +143,12 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
         prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks)
         
         # Always listening for a click on an image
-        imageClicked, prevMouseLocation = checkForInput(mouse, [patient, agent, distractor], prevMouseLocation, USING_MOUSE)
+        imageClicked, prevMouseLocation = checkForInput(mouse, [patient, agent, distractor], prevMouseLocation, USER_INPUT_DEVICE)
         if imageClicked:
             check = handleStimuliClick(imageClicked, agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks)
 
         # Always listening for a click on the checkmark
-        checkmarkClicked, prevMouseLocation = checkForInput(mouse, [check], prevMouseLocation, USING_MOUSE)
+        checkmarkClicked, prevMouseLocation = checkForInput(mouse, [check], prevMouseLocation, USER_INPUT_DEVICE)
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
     trialDur = trialClock.getTime()
@@ -250,7 +250,7 @@ def drawStimuli(stimuli_list):
     mainWindow.flip()
 
 def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks):
-    repeatClicked, prevMouseLocation = checkForInput(mouse, [repeatIcon], prevMouseLocation, USING_MOUSE)
+    repeatClicked, prevMouseLocation = checkForInput(mouse, [repeatIcon], prevMouseLocation, USER_INPUT_DEVICE)
     if repeatClicked:
         playSound(audio)
         pic = "replay"

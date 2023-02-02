@@ -1,10 +1,13 @@
 from psychopy import core, event, gui, visual
 
-def checkForInput(mouse, images, prevMouseLocation, USING_MOUSE):
-    if USING_MOUSE:
+def checkForInput(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
+    if USER_INPUT_DEVICE == 'mouse':
         clickedImage, prevMouseLocation = checkForClick(mouse, images, prevMouseLocation)
-    else: # Using the touch screen
+    elif USER_INPUT_DEVICE == 'touch':
         clickedImage, prevMouseLocation = checkForTap(mouse, images, prevMouseLocation)
+    else:
+        print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
+        core.quit()
     return clickedImage, prevMouseLocation
 
 # Given a list of images, returns the one that is being clicked (or None)
