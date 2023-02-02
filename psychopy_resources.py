@@ -1,4 +1,22 @@
 from psychopy import core, event, gui, visual
+from psychopy.iohub import launchHubServer
+
+def calibrate(mainWindow):
+    # Set up eye tracker
+    iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}
+    io = launchHubServer(window = mainWindow, **iohub_config)
+    tracker = io.getDevice('tracker')
+
+    # Run calibration
+    result = tracker.runSetupProcedure()
+    print("Calibration returned: ", result)
+
+    # Print 1s worth of data, just to see what it looks like
+    tracker.setRecordingState(True)
+    startTime = core.getTime()
+    while core.getTime() - startTime < 1.0:
+        for event in tracker.getEvents():
+            print(event)
 
 def checkForInput(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
     if USER_INPUT_DEVICE == 'mouse':
