@@ -32,7 +32,7 @@ def checkForTap(mouse, images, prevMouseLocation):
         for image in images:
             if image.contains(mouse):
                 clickedImage = image
-            prevMouseLocation = mouse.getPos() # Update for the next check
+                prevMouseLocation = mouse.getPos() # Update for the next check
     return clickedImage, prevMouseLocation
 
 # Displays a buffer screen with given text, and only proceeds once the user clicks

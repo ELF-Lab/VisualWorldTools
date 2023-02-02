@@ -7,7 +7,7 @@ from psychopy_resources import checkForInput, displayBufferScreen, displayFixati
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
 WINDOW_HEIGHT = 1080
-USING_MOUSE = False
+USING_MOUSE = True
 
 def main():
     # Begin with the dialog for inputting subject ID
@@ -251,7 +251,7 @@ def drawStimuli(stimuli_list):
 
 def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks):
     repeatClicked, prevMouseLocation = checkForInput(mouse, [repeatIcon], prevMouseLocation, USING_MOUSE)
-    if  repeatClicked:
+    if repeatClicked:
         playSound(audio)
         pic = "replay"
         trialDur = trialClock.getTime()
