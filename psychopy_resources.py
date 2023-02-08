@@ -18,11 +18,11 @@ def calibrate(mainWindow):
         for event in tracker.getEvents():
             print(event)
 
-def checkForInput(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
+def checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
     if USER_INPUT_DEVICE == 'mouse':
-        clickedImage, prevMouseLocation = checkForClick(mouse, images, prevMouseLocation)
+        clickedImage, prevMouseLocation = checkForClickOnImages(mouse, images, prevMouseLocation)
     elif USER_INPUT_DEVICE == 'touch':
-        clickedImage, prevMouseLocation = checkForTap(mouse, images, prevMouseLocation)
+        clickedImage, prevMouseLocation = checkForTapOnImages(mouse, images, prevMouseLocation)
     else:
         print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
         core.quit()
@@ -30,7 +30,7 @@ def checkForInput(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
 
 # Given a list of images, returns the one that is being clicked (or None)
 # Hold for the duration of the click - so that when this function ends, the click is over
-def checkForClick(mouse, images, prevMouseLocation):
+def checkForClickOnImages(mouse, images, prevMouseLocation):
     clickedImage = None
     for image in images:
         if mouse.isPressedIn(image):
@@ -44,7 +44,7 @@ def checkForClick(mouse, images, prevMouseLocation):
 # Checks for a single tap on an image
 # Does this by asking: has the "mouse" moved? (= yes if a tap was received)
 # And: If so, is the "mouse" within the image?
-def checkForTap(mouse, images, prevMouseLocation):
+def checkForTapOnImages(mouse, images, prevMouseLocation):
     clickedImage = None
     mouse_location = mouse.getPos()
     # If the mouse moved... (check x and y coords)
@@ -53,15 +53,49 @@ def checkForTap(mouse, images, prevMouseLocation):
         for image in images:
             if image.contains(mouse):
                 clickedImage = image
-                prevMouseLocation = mouse.getPos() # Update for the next check
+                prevMouseLocation = mouse_location # Update for the next check
     return clickedImage, prevMouseLocation
 
+def checkForTapAnywhere(mouse, prevMouseLocation):
+    tapped = False
+    mouse_location = mouse.getPos()
+    # If the mouse moved... (check x and y coords)
+    if not(mouse_location[0] == prevMouseLocation[0] and mouse_location[1] == prevMouseLocation[1]):
+        tapped = True
+    
+    prevMouseLocation = mouse_location
+
+    return tapped, prevMouseLocation
+
+def checkForClickAnywhere(mouse, prevMouseLocation):
+    clicked = False
+    if any(mouse.getPressed()):
+        clicked = True
+        prevMouseLocation = mouse.getPos()
+        while any(mouse.getPressed()): # Wait for the click to end before proceeding
+            pass
+    
+    return clicked, prevMouseLocation
+
+def checkForInputAnywhere(mouse, prevMouseLocation, USER_INPUT_DEVICE):
+    if USER_INPUT_DEVICE == 'mouse':
+        inputReceived, prevMouseLocation = checkForClickAnywhere(mouse, prevMouseLocation)
+    elif USER_INPUT_DEVICE == 'touch':
+        inputReceived, prevMouseLocation = checkForTapAnywhere(mouse, prevMouseLocation)
+    else:
+        print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
+        core.quit()
+    return inputReceived, prevMouseLocation
+
 # Displays a buffer screen with given text, and only proceeds once the user clicks
-def displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText):
+def displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText, USER_INPUT_DEVICE):
     bufferScreen = visual.TextStim(mainWindow, text = bufferText, pos = (0.0, 0.0), height = WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
-    while mouse.getPressed()[0] == 0: # Wait for mouse click (anywhere)
-        bufferScreen.draw()
-        mainWindow.flip()  
+    bufferScreen.draw()
+    mainWindow.flip()
+    inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, mouse.getPos(), USER_INPUT_DEVICE)
+    while not inputReceived: # Wait for user input (anywhere on screen)
+        listenForQuit() # Allow the user to quit at this stage, too
+        inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, prevMouseLocation, USER_INPUT_DEVICE)
 
 # Displays a fixation cross on the screen for 1500ms 
 def displayFixationCrossScreen(mainWindow, WINDOW_HEIGHT):

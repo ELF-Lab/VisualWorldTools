@@ -2,7 +2,7 @@ import random
 from pathlib import *
 from psychopy import visual, event, core, sound
 from randomizer import latinSquare
-from psychopy_resources import calibrate, checkForInput, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, listenForQuit
+from psychopy_resources import calibrate, checkForInputOnImages, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, listenForQuit
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
@@ -28,7 +28,7 @@ def main():
 
     # *** BEGIN DISPLAY ***
     # Display welcome screen until the user clicks
-    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.')
+    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.', USER_INPUT_DEVICE)
     calibrate(mainWindow)
 
     # Run trials!
@@ -105,7 +105,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
     # Display screen between trials so participant can indicate when ready
-    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, BUFFER_TEXT)
+    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, BUFFER_TEXT, USER_INPUT_DEVICE)
 
     # Display point in the center of screen for 1500ms
     displayFixationCrossScreen(mainWindow, WINDOW_HEIGHT)
@@ -130,7 +130,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
         # Always be listening for a command to quit the program, or repeat the audio          
         listenForQuit()     
         prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks)
-        imageClicked, prevMouseLocation = checkForInput(mouse, [patient, agent, distractor], prevMouseLocation, USER_INPUT_DEVICE)
+        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, [patient, agent, distractor], prevMouseLocation, USER_INPUT_DEVICE)
 
     # Now, we've received a first click on one of the images
     check = handleStimuliClick(imageClicked, agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks)
@@ -144,12 +144,12 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
         prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks)
         
         # Always listening for a click on an image
-        imageClicked, prevMouseLocation = checkForInput(mouse, [patient, agent, distractor], prevMouseLocation, USER_INPUT_DEVICE)
+        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, [patient, agent, distractor], prevMouseLocation, USER_INPUT_DEVICE)
         if imageClicked:
             check = handleStimuliClick(imageClicked, agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks)
 
         # Always listening for a click on the checkmark
-        checkmarkClicked, prevMouseLocation = checkForInput(mouse, [check], prevMouseLocation, USER_INPUT_DEVICE)
+        checkmarkClicked, prevMouseLocation = checkForInputOnImages(mouse, [check], prevMouseLocation, USER_INPUT_DEVICE)
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
     trialDur = trialClock.getTime()
@@ -251,7 +251,7 @@ def drawStimuli(stimuli_list):
     mainWindow.flip()
 
 def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks):
-    repeatClicked, prevMouseLocation = checkForInput(mouse, [repeatIcon], prevMouseLocation, USER_INPUT_DEVICE)
+    repeatClicked, prevMouseLocation = checkForInputOnImages(mouse, [repeatIcon], prevMouseLocation, USER_INPUT_DEVICE)
     if repeatClicked:
         playSound(audio)
         pic = "replay"
