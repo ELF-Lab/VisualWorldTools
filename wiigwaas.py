@@ -2,7 +2,7 @@ import random
 from pathlib import *
 from psychopy import visual, event, core, sound
 from randomizer import latinSquare
-from psychopy_resources import calibrate, checkForInputOnImages, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, listenForQuit
+from psychopy_resources import calibrate, checkForInputOnImages, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, listenForQuit, setUpEyeTracker
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
@@ -29,7 +29,8 @@ def main():
     # *** BEGIN DISPLAY ***
     # Display welcome screen until the user clicks
     displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.', USER_INPUT_DEVICE)
-    calibrate(mainWindow)
+    tracker = setUpEyeTracker(mainWindow)
+    calibrate(tracker)
 
     # Run trials!
     for trialNum, itemInfo in enumerate(experimentalItems):

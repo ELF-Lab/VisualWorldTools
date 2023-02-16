@@ -1,12 +1,7 @@
 from psychopy import core, event, gui, visual
 from psychopy.iohub import launchHubServer
 
-def calibrate(mainWindow):
-    # Set up eye tracker
-    iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}
-    io = launchHubServer(window = mainWindow, **iohub_config)
-    tracker = io.getDevice('tracker')
-
+def calibrate(tracker):
     # Run calibration
     result = tracker.runSetupProcedure()
     print("Calibration returned: ", result)
@@ -126,3 +121,10 @@ def listenForQuit():
     keys = event.getKeys()
     if quitKey in keys:
         core.quit()
+
+def setUpEyeTracker(mainWindow):
+    iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}
+    io = launchHubServer(window = mainWindow, **iohub_config)
+    tracker = io.getDevice('tracker')
+
+    return tracker
