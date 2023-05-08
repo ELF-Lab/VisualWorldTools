@@ -1,17 +1,67 @@
 from psychopy import core, event, gui, visual
 from psychopy.iohub import launchHubServer
+from psychopy.iohub.constants import EventConstants
+from titta import Titta
+from titta.TalkToProLab import TalkToProLab
 
-def calibrate(tracker):
+def calibrate(tracker, mainWindow):
     # Run calibration
-    result = tracker.runSetupProcedure()
-    print("Calibration returned: ", result)
+    # result = tracker.runSetupProcedure()
+    # print("Calibration returned: ", result)
 
-    # Print 1s worth of data, just to see what it looks like
-    tracker.setRecordingState(True)
-    startTime = core.getTime()
-    while core.getTime() - startTime < 1.0:
-        for event in tracker.getEvents():
-            print(event)
+    # # Print 1s worth of data, just to see what it looks like
+    # tracker.setRecordingState(True)
+    # startTime = core.getTime()
+    # gaze_dot = visual.GratingStim(mainWindow, tex=None, mask='gauss', pos=(0, 0), size=(40, 40), color='green', colorSpace='named', units='pix')
+    # while core.getTime() - startTime < 10.0:
+    #     gpos = tracker.getLastGazePosition()
+    #     print(gpos)
+    #     print(tracker.getEvents())
+    #     if gpos:
+    #         gaze_dot.setPos(gpos)
+    #         gaze_dot.draw()
+    #     mainWindow.flip()
+
+    tryTitta(mainWindow)
+
+def tryTitta(mainWindow):
+    settings = Titta.get_defaults("Tobii Pro Fusion")
+    settings.FILENAME = 'anything'
+
+    # Participant ID and Project name for Lab
+    pid = settings.FILENAME
+
+    tracker = Titta.Connect(settings)
+    tracker.init()
+
+    ttl = TalkToProLab(project_name = None, dummy_mode = False) # Up to here, proceeds to exp but acts weird
+
+    recordInProLab(ttl, pid, tracker, mainWindow)
+    
+    ttl.disconnect()
+    print("made it here")
+
+def recordInProLab(ttl, pid, tracker, win):
+    participant_info = ttl.add_participant(pid)
+    tracker.calibrate(win)
+    with open('output.txt', mode='a') as file_object:
+        print('jsuis ici in recordInProLab', file=file_object)
+    # Check that Lab is ready to start a recording
+    state = ttl.get_state()
+    assert state['state'] == 'ready', state['state']
+
+    ## Start recording (Note: you have to click on the Record Tab first!)
+    rec = ttl.start_recording("image_viewing",
+                        participant_info['participant_id'],
+                        screen_width=1920,
+                        screen_height=1080)
+    
+    core.wait(3)
+
+    
+    ttl.stop_recording()
+    ttl.finalize_recording(rec['recording_id'])
+
 
 def checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
     if USER_INPUT_DEVICE == 'mouse':

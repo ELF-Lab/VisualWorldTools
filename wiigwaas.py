@@ -7,7 +7,7 @@ from psychopy_resources import calibrate, checkForInputOnImages, displayBufferSc
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
 WINDOW_HEIGHT = 1080
-USER_INPUT_DEVICE = 'mouse' # or 'touch'
+USER_INPUT_DEVICE = 'touch' # or 'touch'
 
 def main():
     # Begin with the dialog for inputting subject ID
@@ -30,7 +30,7 @@ def main():
     # Display welcome screen until the user clicks
     displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.', USER_INPUT_DEVICE)
     tracker = setUpEyeTracker(mainWindow)
-    calibrate(tracker)
+    calibrate(tracker, mainWindow)
 
     # Run trials!
     for trialNum, itemInfo in enumerate(experimentalItems):
