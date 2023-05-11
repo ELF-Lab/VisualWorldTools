@@ -1,5 +1,7 @@
 from psychopy import core, event, gui, visual
 from psychopy.iohub import launchHubServer
+from titta import Titta
+from titta.TalkToProLab import TalkToProLab
 
 def calibrate(tracker):
     # Run calibration
@@ -12,6 +14,27 @@ def calibrate(tracker):
     while core.getTime() - startTime < 1.0:
         for event in tracker.getEvents():
             print(event)
+
+def setUpRecorder():
+    # Specify the kind of eyetracker we are using, and an identifier for the participant
+    settings = Titta.get_defaults("Tobii Pro Fusion")
+    settings.FILENAME = 'anything'
+    participantID = settings.FILENAME
+
+    # Create the eyetracker object (doesn't actually interact with the eyetracker itself here, just preparing for TPL)
+    tracker = Titta.Connect(settings)
+    tracker.init()
+
+    # Create the connection with TPL
+    ttl = TalkToProLab(project_name = None, dummy_mode = False)
+
+    return ttl
+
+def closeRecorder(ttl):
+    # We need to explicitly end the thread that was maintaining the connection
+    # Titta is set up to do this in their finalize_recording method, but in this case we are not recording anything yet
+    ttl.endConnectionThread()
+    ttl.disconnect()
 
 def checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
     if USER_INPUT_DEVICE == 'mouse':
@@ -83,13 +106,11 @@ def checkForInputAnywhere(mouse, prevMouseLocation, USER_INPUT_DEVICE):
     return inputReceived, prevMouseLocation
 
 # Displays a buffer screen with given text, and only proceeds once the user clicks
-def displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText, USER_INPUT_DEVICE):
-    bufferScreen = visual.TextStim(mainWindow, text = bufferText, pos = (0.0, 0.0), height = WINDOW_HEIGHT / 20, wrapWidth = WINDOW_WIDTH, color = "black")
-    bufferScreen.draw()
-    mainWindow.flip()
+def displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText, USER_INPUT_DEVICE, quitFunction):
+    displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText)
     inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, mouse.getPos(), USER_INPUT_DEVICE)
     while not inputReceived: # Wait for user input (anywhere on screen)
-        listenForQuit() # Allow the user to quit at this stage, too
+        listenForQuit(quitFunction) # Allow the user to quit at this stage, too
         inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, prevMouseLocation, USER_INPUT_DEVICE)
 
 # Displays a fixation cross on the screen for 1500ms 
@@ -101,7 +122,6 @@ def displayFixationCrossScreen(mainWindow, WINDOW_HEIGHT):
         bold = True,
         height = WINDOW_HEIGHT / 10,
         color = "black")
-
     fixationScreen.draw()
     mainWindow.flip()
     core.wait(1.5) # 1500ms
@@ -115,12 +135,25 @@ def displaySubjIDDialog():
     subjID = int(guiBox.data[0])
     return subjID
 
-# Listens for a keyboard shortcut that tells us to quit the experiment
-def listenForQuit():
+# Displays a screen with given text (how to proceed from this screen is not a part of this function!)
+def displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, waitText):
+    textScreen = visual.TextStim(
+        mainWindow,
+        text = waitText,
+        pos = (0.0, 0.0),
+        height = WINDOW_HEIGHT / 20,
+        wrapWidth = WINDOW_WIDTH,
+        color = "black")
+    textScreen.draw()
+    mainWindow.flip()
+
+# Listens for a keyboard shortcut that tells us to quit the experiment - if detected, it runs the given quit routine
+def listenForQuit(quitFunction):
     quitKey = 'escape'
     keys = event.getKeys()
     if quitKey in keys:
-        core.quit()
+        quitFunction()
+    
 
 def setUpEyeTracker(mainWindow):
     iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}

@@ -2,35 +2,40 @@ import random
 from pathlib import *
 from psychopy import visual, event, core, sound
 from randomizer import latinSquare
-from psychopy_resources import calibrate, checkForInputOnImages, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, listenForQuit, setUpEyeTracker
+from psychopy_resources import calibrate, checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, listenForQuit, setUpEyeTracker, setUpRecorder
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
 WINDOW_HEIGHT = 1080
-USER_INPUT_DEVICE = 'mouse' # or 'touch'
+USER_INPUT_DEVICE = 'mouse' # 'mouse' or 'touch'
 
 def main():
+    # Global vars (to be accessible by all functions)
+    global mainWindow
+    global mouse
+    global outputFile
+    global recorder
+
     # Begin with the dialog for inputting subject ID
     subjID = displaySubjIDDialog()
 
     # *** SET-UP ***
-    # Define the main window and mouse objects - these are made global so they can be accessed by all functions
-    global mainWindow
+    # Define objects for the main screen, mouse, output file and list of experimental items. Plus, start with a blank slate for clicks and events.
     mainWindow = visual.Window([WINDOW_WIDTH, WINDOW_HEIGHT], fullscr = True, allowGUI = True, monitor = 'testMonitor', units = 'pix', color = "white")
-    global mouse
     mouse = event.Mouse(visible = True, win = mainWindow)
-
     outputFile = createOutputFile(subjID)
-
     experimentalItems = getExperimentalItems(subjID)
+    clearClicksAndEvents() 
+    
+    # Setting up the gaze recorder takes a few seconds, so let's begin displaying a loading screen here!
+    displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Setting up...")
+    recorder = setUpRecorder()
 
-    clearClicksAndEvents()
-
-    # *** BEGIN DISPLAY ***
+    # *** BEGIN EXPERIMENT ***
     # Display welcome screen until the user clicks
-    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.', USER_INPUT_DEVICE)
-    tracker = setUpEyeTracker(mainWindow)
-    calibrate(tracker)
+    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.', USER_INPUT_DEVICE, quitExperiment)
+    #tracker = setUpEyeTracker(mainWindow)
+    #calibrate(tracker)
 
     # Run trials!
     for trialNum, itemInfo in enumerate(experimentalItems):
@@ -45,7 +50,7 @@ def main():
         outputFile.write(str(subjID)+"\t"+str(trialNum)+"\t"+str(itemInfo[1])+"\t"+str(itemInfo[2])+"\t"+str(response)+"\n")
         outputFile.flush()
 
-    outputFile.close()
+    quitExperiment()
 
 
 # *** Functions used inside main() ***
@@ -106,7 +111,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
     # Display screen between trials so participant can indicate when ready
-    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, BUFFER_TEXT, USER_INPUT_DEVICE)
+    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, BUFFER_TEXT, USER_INPUT_DEVICE, quitExperiment)
 
     # Display point in the center of screen for 1500ms
     displayFixationCrossScreen(mainWindow, WINDOW_HEIGHT)
@@ -129,7 +134,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     # We wait in this loop until we have a first click on one of the 3 images
     while not imageClicked:
         # Always be listening for a command to quit the program, or repeat the audio          
-        listenForQuit()     
+        listenForQuit(quitExperiment)
         prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks)
         imageClicked, prevMouseLocation = checkForInputOnImages(mouse, [patient, agent, distractor], prevMouseLocation, USER_INPUT_DEVICE)
 
@@ -141,7 +146,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     while not checkmarkClicked:
         
         # Always be listening for a command to quit the program, or repeat the audio  
-        listenForQuit()
+        listenForQuit(quitExperiment)
         prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks)
         
         # Always listening for a click on an image
@@ -282,6 +287,14 @@ def handleStimuliClick(imageClicked, agent, patient, distractor, agentCheck, pat
     
     return check
 
+# This is used inside both main and trial (as the user may quit during a trial)
+def quitExperiment():
+    displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Quitting...")
+    
+    # Quit gracefully
+    closeRecorder(recorder)
+    outputFile.close()
+    core.quit()
 
 ### Run Experiment ###
 main()
