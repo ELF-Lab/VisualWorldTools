@@ -1,7 +1,7 @@
 from psychopy import core, event, gui, visual
 from psychopy.iohub import launchHubServer
-from titta import Titta
-from titta.TalkToProLab import TalkToProLab
+from Titta.titta import Titta
+from Titta.titta.TalkToProLab import TalkToProLab
 
 def calibrate(tracker):
     # Run calibration
