@@ -2,7 +2,7 @@ import random
 from pathlib import *
 from psychopy import visual, event, core, sound
 from randomizer import latinSquare
-from psychopy_resources import calibrate, checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, listenForQuit, setUpEyeTracker, setUpRecorder
+from psychopy_resources import checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, listenForQuit, setUpRecorder, recordGaze
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
@@ -29,14 +29,15 @@ def main():
     
     # Setting up the gaze recorder takes a few seconds, so let's begin displaying a loading screen here!
     displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Setting up...")
-    recorder = setUpRecorder()
+    recorder = setUpRecorder(mainWindow, mouse)
+    #tracker = setUpEyeTracker(mainWindow)
 
     # *** BEGIN EXPERIMENT ***
     # Display welcome screen until the user clicks
     displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.', USER_INPUT_DEVICE, quitExperiment)
-    #tracker = setUpEyeTracker(mainWindow)
     #calibrate(tracker)
 
+    firstTime = True
     # Run trials!
     for trialNum, itemInfo in enumerate(experimentalItems):
         print(trialNum, itemInfo)
@@ -44,7 +45,8 @@ def main():
         audioFileName = itemInfo[7]
         print(imageFileNames)
         
-        response = trial(imageFileNames, audioFileName, mainWindow, mouse)
+        response = trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime)
+        firstTime = False
                 
         #Record the data from the last trial
         outputFile.write(str(subjID)+"\t"+str(trialNum)+"\t"+str(itemInfo[1])+"\t"+str(itemInfo[2])+"\t"+str(response)+"\n")
@@ -87,7 +89,7 @@ def clearClicksAndEvents():
 # - If such a click is received, also display the checkmark/box
 # - If a click is then received in a different image, move the checkmark/box
 # - If a click is then received in the checkmark, end the trial
-def trial(imageFileNames, audioFileName, mainWindow, mouse):    
+def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     IMAGE_SIZE = 425
     CHECKMARK_SIZE = 100
     WAIT_TIME_BETWEEN_TRIALS = .75 # in seconds
@@ -121,7 +123,10 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     
     # Display the images, and then pause before the audio is played
     drawStimuli([patient, agent, distractor, repeatIcon])
-    core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
+    if firstTime:
+        recordGaze(recorder)
+    else:
+        core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
     # Prepare for clicks, play the audio file, and start the timer - the user may interact starting now!
     clearClicksAndEvents()

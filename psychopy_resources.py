@@ -3,37 +3,15 @@ from psychopy.iohub import launchHubServer
 from Titta.titta import Titta
 from Titta.titta.TalkToProLab import TalkToProLab
 
-def calibrate(tracker):
-    # Run calibration
-    result = tracker.runSetupProcedure()
-    print("Calibration returned: ", result)
-
-    # Print 1s worth of data, just to see what it looks like
-    tracker.setRecordingState(True)
-    startTime = core.getTime()
-    while core.getTime() - startTime < 1.0:
-        for event in tracker.getEvents():
-            print(event)
-
-def setUpRecorder():
-    # Specify the kind of eyetracker we are using, and an identifier for the participant
-    settings = Titta.get_defaults("Tobii Pro Fusion")
-    settings.FILENAME = 'anything'
-    participantID = settings.FILENAME
-
-    # Create the eyetracker object (doesn't actually interact with the eyetracker itself here, just preparing for TPL)
-    tracker = Titta.Connect(settings)
-    tracker.init()
-
-    # Create the connection with TPL
-    ttl = TalkToProLab(project_name = None, dummy_mode = False)
-
-    return ttl
+def calibrate(tracker, mainWindow, mouse):
+    tracker.calibrate(mainWindow)
+    # For some reason, this calibration leaves the mouse invisible. So make it visible again before returning.
+    mouse.setVisible(1)
 
 def closeRecorder(ttl):
     # We need to explicitly end the thread that was maintaining the connection
     # Titta is set up to do this in their finalize_recording method, but in this case we are not recording anything yet
-    ttl.endConnectionThread()
+    # ttl.endConnectionThread() # Not needed if we're using recordGaze
     ttl.disconnect()
 
 def checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
@@ -153,7 +131,22 @@ def listenForQuit(quitFunction):
     keys = event.getKeys()
     if quitKey in keys:
         quitFunction()
+
+def recordGaze(proLabConnection):
+    # Check that Lab is ready to start a recording
+    state = proLabConnection.get_state()
+    assert state['state'] == 'ready', state['state']
+
+    ## Start recording (Note: you have to click on the Record Tab first!)
+    participants = proLabConnection.list_participants()['participant_list']
+    assert(len(participants) == 1)
+    participantID = (participants[0])['participant_id']
+    rec = proLabConnection.start_recording("image_viewing", participantID, screen_width=1920, screen_height=1080)
     
+    core.wait(6)
+
+    proLabConnection.stop_recording()
+    proLabConnection.finalize_recording(rec['recording_id'])
 
 def setUpEyeTracker(mainWindow):
     iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}
@@ -161,3 +154,21 @@ def setUpEyeTracker(mainWindow):
     tracker = io.getDevice('tracker')
 
     return tracker
+
+def setUpRecorder(mainWindow, mouse):
+    # Specify the kind of eyetracker we are using, and an identifier for the participant
+    settings = Titta.get_defaults("Tobii Pro Fusion")
+    settings.FILENAME = 'another_test'
+    participantID = settings.FILENAME
+
+    # Create the eyetracker object (doesn't actually interact with the eyetracker itself here, just preparing for TPL)
+    tracker = Titta.Connect(settings)
+    tracker.init()
+
+    # Create the connection with TPL
+    proLabConnection = TalkToProLab(project_name = None, dummy_mode = False)
+    proLabConnection.add_participant('another_test')
+
+    calibrate(tracker, mainWindow, mouse)
+
+    return proLabConnection
