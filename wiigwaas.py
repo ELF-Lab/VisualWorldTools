@@ -124,7 +124,10 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     # Display the images, and then pause before the audio is played
     drawStimuli([patient, agent, distractor, repeatIcon])
     if firstTime:
+        media_info = []
+        media_info.append(recorder.upload_media("C:\\Users\\Anna\\Documents\\Wiigwaas\\visualStims\\brush1-agent.png", "image"))
         recording = startRecordingGaze(recorder)
+        startTime = int((recorder.get_time_stamp())['timestamp'])
     else:
         core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
@@ -164,6 +167,10 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
     if firstTime:
+        recorder.send_stimulus_event(recording['recording_id'],
+                            str(startTime),
+                            media_info[0]['media_id'],
+                            end_timestamp = int((recorder.get_time_stamp())['timestamp']))
         stopRecordingGaze(recorder, recording)
     trialDur = trialClock.getTime()
     response = ["check", trialDur]
