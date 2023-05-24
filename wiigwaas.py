@@ -2,7 +2,7 @@ import random
 from pathlib import *
 from psychopy import visual, event, core, sound
 from randomizer import latinSquare
-from psychopy_resources import checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, listenForQuit, setUpRecorder, recordGaze
+from psychopy_resources import checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, listenForQuit, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
@@ -124,7 +124,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     # Display the images, and then pause before the audio is played
     drawStimuli([patient, agent, distractor, repeatIcon])
     if firstTime:
-        recordGaze(recorder)
+        recording = startRecordingGaze(recorder)
     else:
         core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
@@ -163,6 +163,8 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
         checkmarkClicked, prevMouseLocation = checkForInputOnImages(mouse, [check], prevMouseLocation, USER_INPUT_DEVICE)
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
+    if firstTime:
+        stopRecordingGaze(recorder, recording)
     trialDur = trialClock.getTime()
     response = ["check", trialDur]
     clicks.append(response)

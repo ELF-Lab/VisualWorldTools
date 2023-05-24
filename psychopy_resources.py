@@ -11,7 +11,7 @@ def calibrate(tracker, mainWindow, mouse):
 def closeRecorder(ttl):
     # We need to explicitly end the thread that was maintaining the connection
     # Titta is set up to do this in their finalize_recording method, but in this case we are not recording anything yet
-    # ttl.endConnectionThread() # Not needed if we're using recordGaze
+    ttl.endConnectionThread()
     ttl.disconnect()
 
 def checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
@@ -132,7 +132,7 @@ def listenForQuit(quitFunction):
     if quitKey in keys:
         quitFunction()
 
-def recordGaze(proLabConnection):
+def startRecordingGaze(proLabConnection):
     # Check that Lab is ready to start a recording
     state = proLabConnection.get_state()
     assert state['state'] == 'ready', state['state']
@@ -141,12 +141,13 @@ def recordGaze(proLabConnection):
     participants = proLabConnection.list_participants()['participant_list']
     assert(len(participants) == 1)
     participantID = (participants[0])['participant_id']
-    rec = proLabConnection.start_recording("image_viewing", participantID, screen_width=1920, screen_height=1080)
-    
-    core.wait(6)
+    recording = proLabConnection.start_recording("image_viewing", participantID, screen_width=1920, screen_height=1080)
 
+    return recording
+    
+def stopRecordingGaze(proLabConnection, recording):
     proLabConnection.stop_recording()
-    proLabConnection.finalize_recording(rec['recording_id'])
+    proLabConnection.finalize_recording(recording['recording_id'])
 
 def setUpEyeTracker(mainWindow):
     iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}
