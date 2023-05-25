@@ -1,6 +1,6 @@
 import random
 from pathlib import *
-from psychopy import visual, event, core, sound
+from psychopy import core, event, monitors, sound, visual
 from randomizer import latinSquare
 from psychopy_resources import checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, listenForQuit, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
@@ -8,6 +8,10 @@ from psychopy_resources import checkForInputOnImages, closeRecorder, displayBuff
 WINDOW_WIDTH = 1920
 WINDOW_HEIGHT = 1080
 USER_INPUT_DEVICE = 'mouse' # 'mouse' or 'touch'
+# These two are taken from read_me_TalkToProLab.py
+# All I know is that they make the calibration work properly (rather than only calibrating a smaller central subarea of the screen)
+SCREEN_WIDTH                = 52.7  # cm
+VIEWING_DIST                = 63 #  # distance from eye to center of screen (cm)
 
 def main():
     # Global vars (to be accessible by all functions)
@@ -21,7 +25,11 @@ def main():
 
     # *** SET-UP ***
     # Define objects for the main screen, mouse, output file and list of experimental items. Plus, start with a blank slate for clicks and events.
-    mainWindow = visual.Window([WINDOW_WIDTH, WINDOW_HEIGHT], fullscr = True, allowGUI = True, monitor = 'testMonitor', units = 'pix', color = "white")
+    monitor = monitors.Monitor('myMonitor')
+    monitor.setWidth(SCREEN_WIDTH)
+    monitor.setDistance(VIEWING_DIST)
+    monitor.setSizePix([WINDOW_WIDTH, WINDOW_HEIGHT])
+    mainWindow = visual.Window([WINDOW_WIDTH, WINDOW_HEIGHT], fullscr = True, allowGUI = True, monitor = monitor, units = 'pix', color = "white")
     mouse = event.Mouse(visible = True, win = mainWindow)
     outputFile = createOutputFile(subjID)
     experimentalItems = getExperimentalItems(subjID)
