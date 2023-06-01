@@ -10,7 +10,7 @@ WINDOW_HEIGHT = 1080
 USER_INPUT_DEVICE = 'mouse' # 'mouse' or 'touch'
 # These two are taken from read_me_TalkToProLab.py
 # All I know is that they make the calibration work properly (rather than only calibrating a smaller central subarea of the screen)
-SCREEN_WIDTH                = 52.7  # cm
+SCREEN_WIDTH                = 52.5  # cm
 VIEWING_DIST                = 63 #  # distance from eye to center of screen (cm)
 
 def main():
@@ -133,7 +133,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     drawStimuli([patient, agent, distractor, repeatIcon])
     if firstTime:
         media_info = []
-        media_info.append(recorder.upload_media("C:\\Users\\Anna\\Documents\\Wiigwaas\\visualStims\\brush1-agent.png", "image"))
+        media_info.append(recorder.upload_media(str(patient.image), "image"))
         recording = startRecordingGaze(recorder)
         startTime = int((recorder.get_time_stamp())['timestamp'])
     else:
@@ -175,10 +175,12 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
     if firstTime:
+        end_timestamp = int((recorder.get_time_stamp())['timestamp'])
         recorder.send_stimulus_event(recording['recording_id'],
-                            str(startTime),
-                            media_info[0]['media_id'],
-                            end_timestamp = int((recorder.get_time_stamp())['timestamp']))
+                            start_timestamp = str(startTime),
+                            media_id = media_info[0]['media_id'],
+                            media_position={"left": 0, "top": 0, "right": IMAGE_SIZE, "bottom": IMAGE_SIZE},
+                            end_timestamp = end_timestamp)
         stopRecordingGaze(recorder, recording)
     trialDur = trialClock.getTime()
     response = ["check", trialDur]
