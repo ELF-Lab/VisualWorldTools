@@ -3,6 +3,12 @@ from psychopy.iohub import launchHubServer
 from Titta.titta import Titta
 from Titta.titta.TalkToProLab import TalkToProLab
 
+def addAOI(ttl, image_id, aoi_name, aoi_color, vertices):
+    tag_name = 'test_tag'
+    group_name = 'test_group'
+
+    ttl.add_aois_to_image(image_id, aoi_name, aoi_color, vertices, tag_name = tag_name, group_name = group_name)
+
 def calibrate(tracker, mainWindow, mouse):
     tracker.calibrate(mainWindow)
     # For some reason, this calibration leaves the mouse invisible. So make it visible again before returning.

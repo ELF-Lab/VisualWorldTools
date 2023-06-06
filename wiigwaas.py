@@ -2,7 +2,7 @@ import random
 from pathlib import *
 from psychopy import core, event, monitors, sound, visual
 from randomizer import latinSquare
-from psychopy_resources import checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, listenForQuit, setUpRecorder, startRecordingGaze, stopRecordingGaze
+from psychopy_resources import addAOI, checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, listenForQuit, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
@@ -12,6 +12,8 @@ USER_INPUT_DEVICE = 'mouse' # 'mouse' or 'touch'
 # All I know is that they make the calibration work properly (rather than only calibrating a smaller central subarea of the screen)
 SCREEN_WIDTH                = 52.5  # cm
 VIEWING_DIST                = 63 #  # distance from eye to center of screen (cm)
+IMAGE_SIZE = 425
+IMAGE_OFFSET_FROM_EDGE = 20
 
 def main():
     # Global vars (to be accessible by all functions)
@@ -98,7 +100,6 @@ def clearClicksAndEvents():
 # - If a click is then received in a different image, move the checkmark/box
 # - If a click is then received in the checkmark, end the trial
 def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
-    IMAGE_SIZE = 425
     CHECKMARK_SIZE = 100
     WAIT_TIME_BETWEEN_TRIALS = .75 # in seconds
     WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI = .1
@@ -132,8 +133,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     # Display the images, and then pause before the audio is played
     drawStimuli([patient, agent, distractor, repeatIcon])
     if firstTime:
-        media_info = []
-        media_info.append(recorder.upload_media(str(patient.image), "image"))
+        media_info = addImagesToRecorder()
         recording = startRecordingGaze(recorder)
         startTime = int((recorder.get_time_stamp())['timestamp'])
     else:
@@ -179,7 +179,6 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
         recorder.send_stimulus_event(recording['recording_id'],
                             start_timestamp = str(startTime),
                             media_id = media_info[0]['media_id'],
-                            media_position={"left": 0, "top": 0, "right": IMAGE_SIZE, "bottom": IMAGE_SIZE},
                             end_timestamp = end_timestamp)
         stopRecordingGaze(recorder, recording)
     trialDur = trialClock.getTime()
@@ -191,6 +190,39 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
 
 
 # *** Functions used inside trial() ***
+
+# Give the recorder info about what images are on the screen, so that we can track gazes within those image areas
+def addImagesToRecorder():
+    # Add an overall background image (at present this is really just a placeholder)
+    media_info = []
+    image_for_recorder_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\sample_trial_screen.jpeg"
+    media_type = "image"
+    media_info.append(recorder.upload_media(image_for_recorder_path, media_type))
+
+    # Add an AOI (area of interest) for each image
+    AOI_SIZE = IMAGE_SIZE + IMAGE_OFFSET_FROM_EDGE
+    LEFT_EDGE = 0
+    RIGHT_EDGE = WINDOW_WIDTH
+    X_MIDPOINT = WINDOW_WIDTH/2
+    TOP_EDGE = 0
+    BOTTOM_EDGE = WINDOW_HEIGHT
+
+    aoi_name = 'upper_left'
+    aoi_color =  'AA0000'
+    vertices = ((LEFT_EDGE, TOP_EDGE), (LEFT_EDGE, AOI_SIZE), (LEFT_EDGE + AOI_SIZE, AOI_SIZE), (LEFT_EDGE + AOI_SIZE, TOP_EDGE))
+    addAOI(recorder, media_info[0]['media_id'], aoi_name, aoi_color, vertices)
+
+    aoi_name = 'upper_right'
+    aoi_color = '00AA00'
+    vertices = ((RIGHT_EDGE - AOI_SIZE, TOP_EDGE), (RIGHT_EDGE - AOI_SIZE, TOP_EDGE + AOI_SIZE), (RIGHT_EDGE, TOP_EDGE + AOI_SIZE), (RIGHT_EDGE, TOP_EDGE))
+    addAOI(recorder, media_info[0]['media_id'], aoi_name, aoi_color, vertices)
+
+    aoi_name = 'lower_middle'
+    aoi_color = '0000AA'
+    vertices = ((X_MIDPOINT - AOI_SIZE/2,  BOTTOM_EDGE - AOI_SIZE), (X_MIDPOINT - AOI_SIZE/2, BOTTOM_EDGE), (X_MIDPOINT + AOI_SIZE/2, BOTTOM_EDGE), (X_MIDPOINT + AOI_SIZE/2, BOTTOM_EDGE - AOI_SIZE))
+    addAOI(recorder, media_info[0]['media_id'], aoi_name, aoi_color, vertices)
+
+    return media_info
 
 # Get the images to be displayed for the given trial.
 def getImages(imageFileNames, imageSize, checkmarkSize):    
@@ -217,11 +249,10 @@ def setImagePositions(imageSize, checkmarkSize, patient, agent, distractor, pati
     # Calculate positions for each image relative to the window
     xSpacing = (WINDOW_WIDTH / 2) - (imageSize / 2)
     ySpacing = (WINDOW_HEIGHT / 2) - (imageSize / 2)
-    OFFSET_FROM_EDGE = 20
-    left = -xSpacing + OFFSET_FROM_EDGE
-    right = xSpacing - OFFSET_FROM_EDGE
-    bottom = -ySpacing + OFFSET_FROM_EDGE
-    top = ySpacing - OFFSET_FROM_EDGE
+    left = -xSpacing + IMAGE_OFFSET_FROM_EDGE
+    right = xSpacing - IMAGE_OFFSET_FROM_EDGE
+    bottom = -ySpacing + IMAGE_OFFSET_FROM_EDGE
+    top = ySpacing - IMAGE_OFFSET_FROM_EDGE
     centre = 0
     # Position the checkmarks just above/below the image
     checkBottom = bottom + imageSize / 2 + checkmarkSize / 2
