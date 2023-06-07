@@ -9,6 +9,19 @@ def addAOI(ttl, image_id, aoi_name, aoi_color, vertices):
 
     ttl.add_aois_to_image(image_id, aoi_name, aoi_color, vertices, tag_name = tag_name, group_name = group_name)
 
+# Tell TPL what image we're using during a gaze recording
+def addBackgroundImageToRecorder(ttl, imagePath):
+    media_info = []
+    media_type = "image"
+    media_info.append(ttl.upload_media(imagePath, media_type))
+
+    return media_info
+
+# We need to tell TPL when we're doing with the relevant image
+def finishWithTPLImages(startTime, mediaInfo, ttl, recording):
+    endTimestamp = int((ttl.get_time_stamp())['timestamp'])
+    ttl.send_stimulus_event(recording['recording_id'], start_timestamp = str(startTime), media_id = mediaInfo[0]['media_id'], end_timestamp = endTimestamp)
+
 def calibrate(tracker, mainWindow, mouse):
     tracker.calibrate(mainWindow)
     # For some reason, this calibration leaves the mouse invisible. So make it visible again before returning.

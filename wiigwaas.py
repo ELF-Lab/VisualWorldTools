@@ -2,7 +2,7 @@ import random
 from pathlib import *
 from psychopy import core, event, monitors, sound, visual
 from randomizer import latinSquare
-from psychopy_resources import addAOI, checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, listenForQuit, setUpRecorder, startRecordingGaze, stopRecordingGaze
+from psychopy_resources import addAOI, addBackgroundImageToRecorder, checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, finishWithTPLImages, listenForQuit, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
@@ -133,7 +133,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     # Display the images, and then pause before the audio is played
     drawStimuli([patient, agent, distractor, repeatIcon])
     if firstTime:
-        media_info = addImagesToRecorder()
+        mediaInfo = addImagesToRecorder()
         recording = startRecordingGaze(recorder)
         startTime = int((recorder.get_time_stamp())['timestamp'])
     else:
@@ -175,11 +175,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
     if firstTime:
-        end_timestamp = int((recorder.get_time_stamp())['timestamp'])
-        recorder.send_stimulus_event(recording['recording_id'],
-                            start_timestamp = str(startTime),
-                            media_id = media_info[0]['media_id'],
-                            end_timestamp = end_timestamp)
+        finishWithTPLImages(startTime, mediaInfo, recorder, recording)
         stopRecordingGaze(recorder, recording)
     trialDur = trialClock.getTime()
     response = ["check", trialDur]
@@ -194,10 +190,8 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
 # Give the recorder info about what images are on the screen, so that we can track gazes within those image areas
 def addImagesToRecorder():
     # Add an overall background image (at present this is really just a placeholder)
-    media_info = []
     image_for_recorder_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\sample_trial_screen.jpeg"
-    media_type = "image"
-    media_info.append(recorder.upload_media(image_for_recorder_path, media_type))
+    mediaInfo = addBackgroundImageToRecorder(recorder, image_for_recorder_path)
 
     # Add an AOI (area of interest) for each image
     AOI_SIZE = IMAGE_SIZE + IMAGE_OFFSET_FROM_EDGE
@@ -210,19 +204,19 @@ def addImagesToRecorder():
     aoi_name = 'upper_left'
     aoi_color =  'AA0000'
     vertices = ((LEFT_EDGE, TOP_EDGE), (LEFT_EDGE, AOI_SIZE), (LEFT_EDGE + AOI_SIZE, AOI_SIZE), (LEFT_EDGE + AOI_SIZE, TOP_EDGE))
-    addAOI(recorder, media_info[0]['media_id'], aoi_name, aoi_color, vertices)
+    addAOI(recorder, mediaInfo[0]['media_id'], aoi_name, aoi_color, vertices)
 
     aoi_name = 'upper_right'
     aoi_color = '00AA00'
     vertices = ((RIGHT_EDGE - AOI_SIZE, TOP_EDGE), (RIGHT_EDGE - AOI_SIZE, TOP_EDGE + AOI_SIZE), (RIGHT_EDGE, TOP_EDGE + AOI_SIZE), (RIGHT_EDGE, TOP_EDGE))
-    addAOI(recorder, media_info[0]['media_id'], aoi_name, aoi_color, vertices)
+    addAOI(recorder, mediaInfo[0]['media_id'], aoi_name, aoi_color, vertices)
 
     aoi_name = 'lower_middle'
     aoi_color = '0000AA'
     vertices = ((X_MIDPOINT - AOI_SIZE/2,  BOTTOM_EDGE - AOI_SIZE), (X_MIDPOINT - AOI_SIZE/2, BOTTOM_EDGE), (X_MIDPOINT + AOI_SIZE/2, BOTTOM_EDGE), (X_MIDPOINT + AOI_SIZE/2, BOTTOM_EDGE - AOI_SIZE))
-    addAOI(recorder, media_info[0]['media_id'], aoi_name, aoi_color, vertices)
+    addAOI(recorder, mediaInfo[0]['media_id'], aoi_name, aoi_color, vertices)
 
-    return media_info
+    return mediaInfo
 
 # Get the images to be displayed for the given trial.
 def getImages(imageFileNames, imageSize, checkmarkSize):    
