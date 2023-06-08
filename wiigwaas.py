@@ -10,10 +10,11 @@ WINDOW_HEIGHT = 1080
 USER_INPUT_DEVICE = 'mouse' # 'mouse' or 'touch'
 # These two are taken from read_me_TalkToProLab.py
 # All I know is that they make the calibration work properly (rather than only calibrating a smaller central subarea of the screen)
-SCREEN_WIDTH                = 52.5  # cm
-VIEWING_DIST                = 63 #  # distance from eye to center of screen (cm)
+SCREEN_WIDTH = 52.5  # cm
+VIEWING_DIST = 63 #  # distance from eye to center of screen (cm)
 IMAGE_SIZE = 425
 IMAGE_OFFSET_FROM_EDGE = 20
+NUM_IMAGES = 3 # Order (based on original CSV): agent, patient, distractor
 
 def main():
     # Global vars (to be accessible by all functions)
@@ -52,6 +53,7 @@ def main():
     for trialNum, itemInfo in enumerate(experimentalItems):
         print(trialNum, itemInfo)
         imageFileNames = [itemInfo[4], itemInfo[5], itemInfo[6]]
+        assert(len(imageFileNames) == NUM_IMAGES)
         audioFileName = itemInfo[7]
         print(imageFileNames)
         
@@ -112,9 +114,9 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     audio = sound.Sound(Path.cwd()/"audio"/str(audioFileName))
 
     # Get the relevant images
-    patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox = getImages(imageFileNames, IMAGE_SIZE, CHECKMARK_SIZE)
+    images, checks, repeatIcon, selectionBox = getImages(imageFileNames, IMAGE_SIZE, CHECKMARK_SIZE)
     # Determine the position of each image
-    patient, agent, distractor, patientCheck, agentCheck, distractorCheck = setImagePositions(IMAGE_SIZE, CHECKMARK_SIZE, patient, agent, distractor, patientCheck, agentCheck, distractorCheck)
+    images, checks, repeatIcon = setImagePositions(IMAGE_SIZE, CHECKMARK_SIZE, images, checks, repeatIcon)
 
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
@@ -131,7 +133,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
     # Display the images, and then pause before the audio is played
-    drawStimuli([patient, agent, distractor, repeatIcon])
+    drawStimuli(images + [repeatIcon])
     if firstTime:
         mediaInfo = addImagesToRecorder()
         recording = startRecordingGaze(recorder)
@@ -152,10 +154,10 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
         # Always be listening for a command to quit the program, or repeat the audio          
         listenForQuit(quitExperiment)
         prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks)
-        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, [patient, agent, distractor], prevMouseLocation, USER_INPUT_DEVICE)
+        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE)
 
     # Now, we've received a first click on one of the images
-    check = handleStimuliClick(imageClicked, agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks)
+    check = handleStimuliClick(imageClicked,images, checks, selectionBox, repeatIcon, trialClock, clicks)
 
     # Now we wait in this loop until the checkmark is ultimately clicked
     checkmarkClicked = False
@@ -166,9 +168,9 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
         prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks)
         
         # Always listening for a click on an image
-        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, [patient, agent, distractor], prevMouseLocation, USER_INPUT_DEVICE)
+        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE)
         if imageClicked:
-            check = handleStimuliClick(imageClicked, agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks)
+            check = handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks)
 
         # Always listening for a click on the checkmark
         checkmarkClicked, prevMouseLocation = checkForInputOnImages(mouse, [check], prevMouseLocation, USER_INPUT_DEVICE)
@@ -181,7 +183,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     response = ["check", trialDur]
     clicks.append(response)
 
-    positions = [agent.pos, distractor.pos, patient.pos]
+    positions = [images[0].pos, images[2].pos, images[1].pos]
     return positions, clicks
 
 
@@ -220,28 +222,42 @@ def addImagesToRecorder():
 
 # Get the images to be displayed for the given trial.
 def getImages(imageFileNames, imageSize, checkmarkSize):    
-    patient = visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[1]), units = "pix", size = imageSize)
-    agent = visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[0]), units = "pix", size = imageSize)
-    distractor = visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[2]), units = "pix", size = imageSize)
+    # Create an ImageStim object for each image stimuli
+    agent = patient = distractor = None
+    images = [agent, patient, distractor]
+    for i, image in enumerate(images):
+        images[i] = visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[i]), units = "pix", size = imageSize)
     
-    patientCheck = visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
-    agentCheck = visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
-    distractorCheck = visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
+    # Create a unique check object for each image - even though they're all the same check image, they'll end up having different positions
+    agentCheck = patientCheck = distractorCheck = None
+    checks = [patientCheck, agentCheck, distractorCheck]
+    for i, check in enumerate(checks):
+        checks[i] = visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
     
     repeatIcon = visual.ImageStim(win = mainWindow, image = Path.cwd()/"repeat.png", units = "pix", size = 100)
-    bufferSize = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 15
-    repeatIcon.setPos([-WINDOW_WIDTH / 2 + bufferSize,-WINDOW_HEIGHT / 2 + bufferSize])
     
     selectionBox = visual.Rect(win = mainWindow, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = imageSize)
 
-    return patient, agent, distractor, patientCheck, agentCheck, distractorCheck, repeatIcon, selectionBox
+    return images, checks, repeatIcon, selectionBox
 
-def setImagePositions(imageSize, checkmarkSize, patient, agent, distractor, patientCheck, agentCheck, distractorCheck):
+# Note that setPos defines the position of the image's /centre/, and screen positions are determined based on the /centre/ of the screen being (0,0)
+def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon):
+    agent = images[0]
+    patient = images[1]
+    distractor = images[2]
+    agentCheck = checks[0]
+    patientCheck = checks[1]
+    distractorCheck = checks[2]
+
+    # The repeat button's position is always the same, no randomization needed
+    bufferSize = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 15
+    repeatIcon.setPos([-WINDOW_WIDTH / 2 + bufferSize,-WINDOW_HEIGHT / 2 + bufferSize])
+
     # Randomly determine position of agent/patient
     rand = random.randint(0,5)
 
     # Calculate positions for each image relative to the window
-    xSpacing = (WINDOW_WIDTH / 2) - (imageSize / 2)
+    xSpacing = (WINDOW_WIDTH / 2) - (imageSize / 2) #i.e. distance from centre of screen to centre of image in order for the image to be against one side of the screen
     ySpacing = (WINDOW_HEIGHT / 2) - (imageSize / 2)
     left = -xSpacing + IMAGE_OFFSET_FROM_EDGE
     right = xSpacing - IMAGE_OFFSET_FROM_EDGE
@@ -295,7 +311,7 @@ def setImagePositions(imageSize, checkmarkSize, patient, agent, distractor, pati
         distractor.setPos([left, top])
         distractorCheck.setPos([left, checkTop])
 
-    return patient, agent, distractor, patientCheck, agentCheck, distractorCheck  
+    return [agent, patient, distractor], [agentCheck, patientCheck, distractorCheck], repeatIcon
 
 def playSound(audio):
     audio.play()
@@ -316,23 +332,23 @@ def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks):
 
     return prevMouseLocation
 
-def handleStimuliClick(imageClicked, agent, patient, distractor, agentCheck, patientCheck, distractorCheck, selectionBox, repeatIcon, trialClock, clicks):
+def handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks):
     trialDur = trialClock.getTime()
     selectionBox.setPos(imageClicked.pos)
-    if imageClicked == agent:
+    if imageClicked == images[0]:
         pic = "agent"
-        check = agentCheck
-    elif imageClicked == patient:
+        check = checks[0]
+    elif imageClicked == images[1]:
         pic = "patient"
-        check = patientCheck
-    elif imageClicked == distractor:
+        check = checks[1]
+    elif imageClicked == images[2]:
         pic = "distractor"
-        check = distractorCheck
+        check = checks[2]
     response = [pic, trialDur]
     clicks.append(response)
 
     # Re-draw to include the selection box and checkmark
-    drawStimuli([patient, agent, distractor, repeatIcon, selectionBox, check])
+    drawStimuli(images + [repeatIcon, selectionBox, check])
     
     return check
 
