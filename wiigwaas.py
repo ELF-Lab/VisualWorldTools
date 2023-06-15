@@ -1,4 +1,4 @@
-import random
+from random import randint
 from pathlib import *
 from psychopy import core, event, monitors, sound, visual
 from randomizer import latinSquare
@@ -242,21 +242,11 @@ def getImages(imageFileNames, imageSize, checkmarkSize):
 
 # Note that setPos defines the position of the image's /centre/, and screen positions are determined based on the /centre/ of the screen being (0,0)
 def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon):
-    agent = images[0]
-    patient = images[1]
-    distractor = images[2]
-    agentCheck = checks[0]
-    patientCheck = checks[1]
-    distractorCheck = checks[2]
-
     # The repeat button's position is always the same, no randomization needed
     bufferSize = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 15
     repeatIcon.setPos([-WINDOW_WIDTH / 2 + bufferSize,-WINDOW_HEIGHT / 2 + bufferSize])
 
-    # Randomly determine position of agent/patient
-    rand = random.randint(0,5)
-
-    # Calculate positions for each image relative to the window
+    # Calculate positions for the images relative to the window
     xSpacing = (WINDOW_WIDTH / 2) - (imageSize / 2) #i.e. distance from centre of screen to centre of image in order for the image to be against one side of the screen
     ySpacing = (WINDOW_HEIGHT / 2) - (imageSize / 2)
     left = -xSpacing + IMAGE_OFFSET_FROM_EDGE
@@ -267,51 +257,38 @@ def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon):
     # Position the checkmarks just above/below the image
     checkBottom = bottom + imageSize / 2 + checkmarkSize / 2
     checkTop = top - imageSize / 2 - checkmarkSize / 2
-    
-    if (rand == 1):
-        patient.setPos([left, top])
-        patientCheck.setPos([left, checkTop])
-        agent.setPos([right, top])
-        agentCheck.setPos([right, checkTop])
-        distractor.setPos([centre, bottom])
-        distractorCheck.setPos([centre, checkBottom])
-    elif (rand == 2):
-        patient.setPos([right, top])
-        patientCheck.setPos([right, checkTop])
-        agent.setPos([left, top])
-        agentCheck.setPos([left, checkTop])
-        distractor.setPos([centre, bottom])
-        distractorCheck.setPos([centre, checkBottom])
-    elif (rand == 3):
-        patient.setPos([left, top])
-        patientCheck.setPos([left, checkTop])
-        agent.setPos([centre, bottom])
-        agentCheck.setPos([centre, checkBottom])
-        distractor.setPos([right, top])
-        distractorCheck.setPos([right, checkTop])
-    elif (rand == 4):
-        patient.setPos([right, top])
-        patientCheck.setPos([right, checkTop])
-        agent.setPos([centre, bottom])
-        agentCheck.setPos([centre, checkBottom])
-        distractor.setPos([left, top])
-        distractorCheck.setPos([left, checkTop])
-    elif (rand == 5):
-        patient.setPos([centre, bottom])
-        patientCheck.setPos([centre, checkBottom])
-        agent.setPos([left, top])
-        agentCheck.setPos([left, checkTop])
-        distractor.setPos([right, top])
-        distractorCheck.setPos([right, checkTop])
-    else:
-        patient.setPos([centre, bottom])
-        patientCheck.setPos([centre, checkBottom])
-        agent.setPos([right, top])
-        agentCheck.setPos([right, checkTop])
-        distractor.setPos([left, top])
-        distractorCheck.setPos([left, checkTop])
 
-    return [agent, patient, distractor], [agentCheck, patientCheck, distractorCheck], repeatIcon
+    # Randomly determine the images' order (and therfore, positions)
+    numberOfImages = 3
+    random_ordering_of_images = getRandomImageOrder(numberOfImages)\
+    # This is spelt out for readability, but can of course be simplified in future to suit varaible numbers of images
+    # One of these will be the number 0, one will be 1, and the other will be 2
+    firstImageIndex = random_ordering_of_images[0]
+    secondImageIndex = random_ordering_of_images[1]
+    thirdImageIndex = random_ordering_of_images[2]
+
+    # Now set their positions based on that random order!
+    images[firstImageIndex].setPos([left, top])
+    checks[firstImageIndex].setPos([left, checkTop])
+    images[secondImageIndex].setPos([right, top])
+    checks[secondImageIndex].setPos([right, checkTop])
+    images[thirdImageIndex].setPos([centre, bottom])
+    checks[thirdImageIndex].setPos([centre, checkBottom])
+
+    return images, checks, repeatIcon
+
+def getRandomImageOrder(numImages):
+    # We can think of the images as each having a number index, e.g. with three images, agent = 0, patient = 1, distractor = 2
+    # So the images are numbered 0 through numImages - 1. We want a list that tells us their order.
+    # So we want to randomize the order of the numbers 0 through numImages - 1.
+    ordered_list = list(range(0, numImages)) # A list of all the image indexes, but in ascending order
+    randomly_ordered_list = []
+
+    for i in range(0, numImages):
+       random_num = randint(0, len(ordered_list) - 1) # Choose randomly, from however many numbers we have left to choose
+       randomly_ordered_list.append(ordered_list.pop(random_num))
+
+    return randomly_ordered_list
 
 def playSound(audio):
     audio.play()
