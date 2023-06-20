@@ -5,6 +5,8 @@ from randomizer import latinSquare
 from display_resources import checkForInputOnImages, clearClicksAndEvents, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen,getImages, handleStimuliClick, drawStimuli, listenForQuit, listenForRepeat, playSound, setImagePositions
 from eye_tracking_resources import addAOI, addBackgroundImageToRecorder, closeRecorder, finishWithTPLImages, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
+EYETRACKING_ON = True # Turn this off if you just want to test the experimental flow sans any eyetracking
+
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
 WINDOW_HEIGHT = 1080
@@ -42,7 +44,8 @@ def main():
     
     # Setting up the gaze recorder takes a few seconds, so let's begin displaying a loading screen here!
     displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Setting up...")
-    recorder = setUpRecorder(mainWindow, mouse)
+    if EYETRACKING_ON:
+        recorder = setUpRecorder(mainWindow, mouse)
     #tracker = setUpEyeTracker(mainWindow)
 
     # *** BEGIN EXPERIMENT ***
@@ -50,7 +53,7 @@ def main():
     displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.', USER_INPUT_DEVICE, quitExperiment)
     #calibrate(tracker)
 
-    firstTime = True
+    firstTime = EYETRACKING_ON
     # Run trials!
     for trialNum, itemInfo in enumerate(experimentalItems):
         print(trialNum, itemInfo)
@@ -227,7 +230,8 @@ def quitExperiment():
     displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Quitting...")
     
     # Quit gracefully
-    closeRecorder(recorder)
+    if EYETRACKING_ON:
+        closeRecorder(recorder)
     outputFile.close()
     core.quit()
 
