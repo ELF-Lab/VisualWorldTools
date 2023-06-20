@@ -13,8 +13,9 @@ USER_INPUT_DEVICE = 'mouse' # 'mouse' or 'touch'
 SCREEN_WIDTH = 52.5  # cm
 VIEWING_DIST = 63 #  # distance from eye to center of screen (cm)
 IMAGE_SIZE = 425
+REPEAT_ICON_SIZE = 100
 IMAGE_OFFSET_FROM_EDGE = 20
-NUM_IMAGES = 3 # Order (based on original CSV): agent, patient, distractor
+SUPPORTED_IMAGE_NUMBERS = [1, 2, 3, 4] # Different numbers of images = different on-screen arrangements, so we only want quantities that we are prepared to arrange.
 
 def main():
     # Global vars (to be accessible by all functions)
@@ -52,8 +53,12 @@ def main():
     # Run trials!
     for trialNum, itemInfo in enumerate(experimentalItems):
         print(trialNum, itemInfo)
+        # By specifying the image file names, you also specify how many images we're using!
         imageFileNames = [itemInfo[4], itemInfo[5], itemInfo[6]]
-        assert(len(imageFileNames) == NUM_IMAGES)
+        # Check that the number of images provided is supported
+        if len(imageFileNames) not in SUPPORTED_IMAGE_NUMBERS:
+            print(f"\nERROR: Unsupported number of images ({len(imageFileNames)}).  Supported numbers are {SUPPORTED_IMAGE_NUMBERS}.\n")
+            quitExperiment()
         audioFileName = itemInfo[7]
         print(imageFileNames)
         
@@ -183,7 +188,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     response = ["check", trialDur]
     clicks.append(response)
 
-    positions = [images[0].pos, images[2].pos, images[1].pos]
+    positions = [image.pos for image in images]
     return positions, clicks
 
 
@@ -221,20 +226,17 @@ def addImagesToRecorder():
     return mediaInfo
 
 # Get the images to be displayed for the given trial.
-def getImages(imageFileNames, imageSize, checkmarkSize):    
-    # Create an ImageStim object for each image stimuli
-    agent = patient = distractor = None
-    images = [agent, patient, distractor]
-    for i, image in enumerate(images):
-        images[i] = visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[i]), units = "pix", size = imageSize)
-    
-    # Create a unique check object for each image - even though they're all the same check image, they'll end up having different positions
-    agentCheck = patientCheck = distractorCheck = None
-    checks = [patientCheck, agentCheck, distractorCheck]
-    for i, check in enumerate(checks):
-        checks[i] = visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize)
-    
-    repeatIcon = visual.ImageStim(win = mainWindow, image = Path.cwd()/"repeat.png", units = "pix", size = 100)
+def getImages(imageFileNames, imageSize, checkmarkSize):
+    numberOfImages = len(imageFileNames)
+
+    # Create an ImageStim object for each image stimuli, and a unique check object for each image - even though they're all the same check image, they'll end up having different positions
+    images = []
+    checks = []
+    for i in range(0, numberOfImages):
+        images.append(visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[i]), units = "pix", size = imageSize))
+        checks.append(visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize))
+
+    repeatIcon = visual.ImageStim(win = mainWindow, image = Path.cwd()/"repeat.png", units = "pix", size = REPEAT_ICON_SIZE)
     
     selectionBox = visual.Rect(win = mainWindow, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = imageSize)
 
@@ -242,6 +244,8 @@ def getImages(imageFileNames, imageSize, checkmarkSize):
 
 # Note that setPos defines the position of the image's /centre/, and screen positions are determined based on the /centre/ of the screen being (0,0)
 def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon):
+    numberOfImages = len(images)
+
     # The repeat button's position is always the same, no randomization needed
     bufferSize = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 15
     repeatIcon.setPos([-WINDOW_WIDTH / 2 + bufferSize,-WINDOW_HEIGHT / 2 + bufferSize])
@@ -254,26 +258,31 @@ def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon):
     bottom = -ySpacing + IMAGE_OFFSET_FROM_EDGE
     top = ySpacing - IMAGE_OFFSET_FROM_EDGE
     centre = 0
-    # Position the checkmarks just above/below the image
-    checkBottom = bottom + imageSize / 2 + checkmarkSize / 2
-    checkTop = top - imageSize / 2 - checkmarkSize / 2
+    # Position the checkmarks just above/below the image. This offset should be added/subtracted from the corresponding image's position.
+    checkOffset = imageSize / 2 + checkmarkSize / 2
 
     # Randomly determine the images' order (and therfore, positions)
-    numberOfImages = 3
-    random_ordering_of_images = getRandomImageOrder(numberOfImages)\
-    # This is spelt out for readability, but can of course be simplified in future to suit varaible numbers of images
-    # One of these will be the number 0, one will be 1, and the other will be 2
-    firstImageIndex = random_ordering_of_images[0]
-    secondImageIndex = random_ordering_of_images[1]
-    thirdImageIndex = random_ordering_of_images[2]
+    random_ordering_of_images = getRandomImageOrder(numberOfImages)
+
+    # Determine the image positions we'll be using, based on the # of images
+    ONE_POSITION = [[centre, centre]]
+    TWO_POSITIONS = [[left, centre], [right, centre]]
+    THREE_POSITIONS = [[left, top], [right, top], [centre, bottom]]
+    FOUR_POSITIONS = [[left, top], [right, top], [left, bottom], [right, bottom]]
+    POSITION_LISTS = {
+        1: ONE_POSITION,
+        2: TWO_POSITIONS,
+        3: THREE_POSITIONS,
+        4: FOUR_POSITIONS
+    }
+    assert numberOfImages in POSITION_LISTS.keys()
+    imagePositions = POSITION_LISTS[numberOfImages]
 
     # Now set their positions based on that random order!
-    images[firstImageIndex].setPos([left, top])
-    checks[firstImageIndex].setPos([left, checkTop])
-    images[secondImageIndex].setPos([right, top])
-    checks[secondImageIndex].setPos([right, checkTop])
-    images[thirdImageIndex].setPos([centre, bottom])
-    checks[thirdImageIndex].setPos([centre, checkBottom])
+    for i, imagePosition in enumerate(imagePositions):
+        images[random_ordering_of_images[i]].setPos(imagePosition)
+        # Put the check below the image UNLESS the image is already at the bottom of the screen, in which case put the check above the image
+        checks[random_ordering_of_images[i]].setPos([imagePosition[0], imagePosition[1] - checkOffset if imagePosition[1] != bottom else imagePosition[1] + checkOffset])
 
     return images, checks, repeatIcon
 
@@ -310,17 +319,30 @@ def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks):
     return prevMouseLocation
 
 def handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks):
+    numberOfImages = len(images)
+
+    # Determine the names of the images we're dealing with. These name lists match their order in the experimental items input file!
+    ONE_IMAGE_NAME = ["agent"]
+    TWO_IMAGE_NAMES = ["agent", "patient"]
+    THREE_IMAGE_NAMES = ["agent", "patient", "distractor"]
+    FOUR_IMAGE_NAMES = ["agent", "patient", "distractorA", "distractorB"]
+    NAME_LISTS = {
+        1: ONE_IMAGE_NAME,
+        2: TWO_IMAGE_NAMES,
+        3: THREE_IMAGE_NAMES,
+        4: FOUR_IMAGE_NAMES
+    }
+    assert numberOfImages in NAME_LISTS.keys()
+    imageNames = NAME_LISTS[numberOfImages]
+
+    # Figure out which image was clicked
     trialDur = trialClock.getTime()
     selectionBox.setPos(imageClicked.pos)
-    if imageClicked == images[0]:
-        pic = "agent"
-        check = checks[0]
-    elif imageClicked == images[1]:
-        pic = "patient"
-        check = checks[1]
-    elif imageClicked == images[2]:
-        pic = "distractor"
-        check = checks[2]
+    for i, image in enumerate(images):
+        if imageClicked == image:
+            pic = imageNames[i]
+            check = checks[i]
+
     response = [pic, trialDur]
     clicks.append(response)
 
