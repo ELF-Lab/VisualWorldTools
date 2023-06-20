@@ -2,7 +2,8 @@ from random import randint
 from pathlib import *
 from psychopy import core, event, monitors, sound, visual
 from randomizer import latinSquare
-from psychopy_resources import addAOI, addBackgroundImageToRecorder, checkForInputOnImages, closeRecorder, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen, finishWithTPLImages, listenForQuit, setUpRecorder, startRecordingGaze, stopRecordingGaze
+from display_resources import checkForInputOnImages, clearClicksAndEvents, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen,getImages, handleStimuliClick, drawStimuli, listenForQuit, listenForRepeat, playSound, setImagePositions
+from eye_tracking_resources import addAOI, addBackgroundImageToRecorder, closeRecorder, finishWithTPLImages, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
@@ -37,7 +38,7 @@ def main():
     mouse = event.Mouse(visible = True, win = mainWindow)
     outputFile = createOutputFile(subjID)
     experimentalItems = getExperimentalItems(subjID)
-    clearClicksAndEvents() 
+    clearClicksAndEvents(mouse)
     
     # Setting up the gaze recorder takes a few seconds, so let's begin displaying a loading screen here!
     displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Setting up...")
@@ -92,10 +93,6 @@ def getExperimentalItems(subjID):
     print(experimentalItems)
     return experimentalItems
 
-def clearClicksAndEvents():
-    mouse.clickReset()
-    event.clearEvents()
-
 # What happens in a trial?
 # - Determine the images to be displayed and the audio to be played
 # - Set image positions (randomly)
@@ -119,9 +116,9 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     audio = sound.Sound(Path.cwd()/"audio"/str(audioFileName))
 
     # Get the relevant images
-    images, checks, repeatIcon, selectionBox = getImages(imageFileNames, IMAGE_SIZE, CHECKMARK_SIZE)
+    images, checks, repeatIcon, selectionBox = getImages(imageFileNames, IMAGE_SIZE, CHECKMARK_SIZE, REPEAT_ICON_SIZE, mainWindow)
     # Determine the position of each image
-    images, checks, repeatIcon = setImagePositions(IMAGE_SIZE, CHECKMARK_SIZE, images, checks, repeatIcon)
+    images, checks, repeatIcon = setImagePositions(IMAGE_SIZE, CHECKMARK_SIZE, images, checks, repeatIcon, WINDOW_WIDTH, WINDOW_HEIGHT, IMAGE_OFFSET_FROM_EDGE)
 
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
@@ -138,7 +135,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
     # Display the images, and then pause before the audio is played
-    drawStimuli(images + [repeatIcon])
+    drawStimuli(images + [repeatIcon], mainWindow)
     if firstTime:
         mediaInfo = addImagesToRecorder()
         recording = startRecordingGaze(recorder)
@@ -147,7 +144,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
         core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
     # Prepare for clicks, play the audio file, and start the timer - the user may interact starting now!
-    clearClicksAndEvents()
+    clearClicksAndEvents(mouse)
     clicks = []
     imageClicked = None
     prevMouseLocation = mouse.getPos()
@@ -158,11 +155,11 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     while not imageClicked:
         # Always be listening for a command to quit the program, or repeat the audio          
         listenForQuit(quitExperiment)
-        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks)
+        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, USER_INPUT_DEVICE)
         imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE)
 
     # Now, we've received a first click on one of the images
-    check = handleStimuliClick(imageClicked,images, checks, selectionBox, repeatIcon, trialClock, clicks)
+    check = handleStimuliClick(imageClicked,images, checks, selectionBox, repeatIcon, trialClock, clicks, mainWindow)
 
     # Now we wait in this loop until the checkmark is ultimately clicked
     checkmarkClicked = False
@@ -170,12 +167,12 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
         
         # Always be listening for a command to quit the program, or repeat the audio  
         listenForQuit(quitExperiment)
-        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks)
+        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, USER_INPUT_DEVICE)
         
         # Always listening for a click on an image
         imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE)
         if imageClicked:
-            check = handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks)
+            check = handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks, mainWindow)
 
         # Always listening for a click on the checkmark
         checkmarkClicked, prevMouseLocation = checkForInputOnImages(mouse, [check], prevMouseLocation, USER_INPUT_DEVICE)
@@ -204,7 +201,7 @@ def addImagesToRecorder():
     AOI_SIZE = IMAGE_SIZE + IMAGE_OFFSET_FROM_EDGE
     LEFT_EDGE = 0
     RIGHT_EDGE = WINDOW_WIDTH
-    X_MIDPOINT = WINDOW_WIDTH/2
+    X_MIDPOINT = WINDOW_WIDTH / 2
     TOP_EDGE = 0
     BOTTOM_EDGE = WINDOW_HEIGHT
 
@@ -224,132 +221,6 @@ def addImagesToRecorder():
     addAOI(recorder, mediaInfo[0]['media_id'], aoi_name, aoi_color, vertices)
 
     return mediaInfo
-
-# Get the images to be displayed for the given trial.
-def getImages(imageFileNames, imageSize, checkmarkSize):
-    numberOfImages = len(imageFileNames)
-
-    # Create an ImageStim object for each image stimuli, and a unique check object for each image - even though they're all the same check image, they'll end up having different positions
-    images = []
-    checks = []
-    for i in range(0, numberOfImages):
-        images.append(visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[i]), units = "pix", size = imageSize))
-        checks.append(visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize))
-
-    repeatIcon = visual.ImageStim(win = mainWindow, image = Path.cwd()/"repeat.png", units = "pix", size = REPEAT_ICON_SIZE)
-    
-    selectionBox = visual.Rect(win = mainWindow, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = imageSize)
-
-    return images, checks, repeatIcon, selectionBox
-
-# Note that setPos defines the position of the image's /centre/, and screen positions are determined based on the /centre/ of the screen being (0,0)
-def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon):
-    numberOfImages = len(images)
-
-    # The repeat button's position is always the same, no randomization needed
-    bufferSize = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 15
-    repeatIcon.setPos([-WINDOW_WIDTH / 2 + bufferSize,-WINDOW_HEIGHT / 2 + bufferSize])
-
-    # Calculate positions for the images relative to the window
-    xSpacing = (WINDOW_WIDTH / 2) - (imageSize / 2) #i.e. distance from centre of screen to centre of image in order for the image to be against one side of the screen
-    ySpacing = (WINDOW_HEIGHT / 2) - (imageSize / 2)
-    left = -xSpacing + IMAGE_OFFSET_FROM_EDGE
-    right = xSpacing - IMAGE_OFFSET_FROM_EDGE
-    bottom = -ySpacing + IMAGE_OFFSET_FROM_EDGE
-    top = ySpacing - IMAGE_OFFSET_FROM_EDGE
-    centre = 0
-    # Position the checkmarks just above/below the image. This offset should be added/subtracted from the corresponding image's position.
-    checkOffset = imageSize / 2 + checkmarkSize / 2
-
-    # Randomly determine the images' order (and therfore, positions)
-    random_ordering_of_images = getRandomImageOrder(numberOfImages)
-
-    # Determine the image positions we'll be using, based on the # of images
-    ONE_POSITION = [[centre, centre]]
-    TWO_POSITIONS = [[left, centre], [right, centre]]
-    THREE_POSITIONS = [[left, top], [right, top], [centre, bottom]]
-    FOUR_POSITIONS = [[left, top], [right, top], [left, bottom], [right, bottom]]
-    POSITION_LISTS = {
-        1: ONE_POSITION,
-        2: TWO_POSITIONS,
-        3: THREE_POSITIONS,
-        4: FOUR_POSITIONS
-    }
-    assert numberOfImages in POSITION_LISTS.keys()
-    imagePositions = POSITION_LISTS[numberOfImages]
-
-    # Now set their positions based on that random order!
-    for i, imagePosition in enumerate(imagePositions):
-        images[random_ordering_of_images[i]].setPos(imagePosition)
-        # Put the check below the image UNLESS the image is already at the bottom of the screen, in which case put the check above the image
-        checks[random_ordering_of_images[i]].setPos([imagePosition[0], imagePosition[1] - checkOffset if imagePosition[1] != bottom else imagePosition[1] + checkOffset])
-
-    return images, checks, repeatIcon
-
-def getRandomImageOrder(numImages):
-    # We can think of the images as each having a number index, e.g. with three images, agent = 0, patient = 1, distractor = 2
-    # So the images are numbered 0 through numImages - 1. We want a list that tells us their order.
-    # So we want to randomize the order of the numbers 0 through numImages - 1.
-    ordered_list = list(range(0, numImages)) # A list of all the image indexes, but in ascending order
-    randomly_ordered_list = []
-
-    for i in range(0, numImages):
-       random_num = randint(0, len(ordered_list) - 1) # Choose randomly, from however many numbers we have left to choose
-       randomly_ordered_list.append(ordered_list.pop(random_num))
-
-    return randomly_ordered_list
-
-def playSound(audio):
-    audio.play()
-
-def drawStimuli(stimuli_list):
-    for stimulus in stimuli_list:
-        stimulus.draw()
-    mainWindow.flip()
-
-def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks):
-    repeatClicked, prevMouseLocation = checkForInputOnImages(mouse, [repeatIcon], prevMouseLocation, USER_INPUT_DEVICE)
-    if repeatClicked:
-        playSound(audio)
-        pic = "replay"
-        trialDur = trialClock.getTime()
-        response = [pic, trialDur]
-        clicks.append(response)
-
-    return prevMouseLocation
-
-def handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks):
-    numberOfImages = len(images)
-
-    # Determine the names of the images we're dealing with. These name lists match their order in the experimental items input file!
-    ONE_IMAGE_NAME = ["agent"]
-    TWO_IMAGE_NAMES = ["agent", "patient"]
-    THREE_IMAGE_NAMES = ["agent", "patient", "distractor"]
-    FOUR_IMAGE_NAMES = ["agent", "patient", "distractorA", "distractorB"]
-    NAME_LISTS = {
-        1: ONE_IMAGE_NAME,
-        2: TWO_IMAGE_NAMES,
-        3: THREE_IMAGE_NAMES,
-        4: FOUR_IMAGE_NAMES
-    }
-    assert numberOfImages in NAME_LISTS.keys()
-    imageNames = NAME_LISTS[numberOfImages]
-
-    # Figure out which image was clicked
-    trialDur = trialClock.getTime()
-    selectionBox.setPos(imageClicked.pos)
-    for i, image in enumerate(images):
-        if imageClicked == image:
-            pic = imageNames[i]
-            check = checks[i]
-
-    response = [pic, trialDur]
-    clicks.append(response)
-
-    # Re-draw to include the selection box and checkmark
-    drawStimuli(images + [repeatIcon, selectionBox, check])
-    
-    return check
 
 # This is used inside both main and trial (as the user may quit during a trial)
 def quitExperiment():
