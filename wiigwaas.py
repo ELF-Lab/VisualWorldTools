@@ -3,7 +3,7 @@ from pathlib import *
 from psychopy import core, event, monitors, sound, visual
 from randomizer import latinSquare
 from display_resources import checkForInputOnImages, clearClicksAndEvents, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen,getImages, handleStimuliClick, drawStimuli, listenForQuit, listenForRepeat, playSound, setImagePositions
-from eye_tracking_resources import addAOI, addBackgroundImageToRecorder, closeRecorder, finishWithTPLImages, setUpRecorder, startRecordingGaze, stopRecordingGaze
+from eye_tracking_resources import addAOI, addImageToRecorder, closeRecorder, finishDisplayingStimulus, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
 EYETRACKING_ON = True # Turn this off if you just want to test the experimental flow sans any eyetracking
 
@@ -23,9 +23,11 @@ SUPPORTED_IMAGE_NUMBERS = [1, 2, 3, 4] # Different numbers of images = different
 def main():
     # Global vars (to be accessible by all functions)
     global mainWindow
+    global mediaInfo
     global mouse
     global outputFile
     global recorder
+    global recording
 
     # Begin with the dialog for inputting subject ID
     subjID = displaySubjIDDialog()
@@ -46,6 +48,8 @@ def main():
     displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Setting up...")
     if EYETRACKING_ON:
         recorder = setUpRecorder(mainWindow, mouse)
+        mediaInfo = addImagesToRecorder()
+        recording = startRecordingGaze(recorder)
     #tracker = setUpEyeTracker(mainWindow)
 
     # *** BEGIN EXPERIMENT ***
@@ -67,6 +71,8 @@ def main():
         print(imageFileNames)
         
         response = trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime)
+        if firstTime:
+            stopRecordingGaze(recorder, recording)
         firstTime = False
                 
         #Record the data from the last trial
@@ -129,7 +135,12 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
     # Display screen between trials so participant can indicate when ready
+    if firstTime:
+        startTime = int((recorder.get_time_stamp())['timestamp'])
     displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, BUFFER_TEXT, USER_INPUT_DEVICE, quitExperiment)
+
+    if firstTime:
+        displayTransitionTime = finishDisplayingStimulus(startTime, mediaInfo[2], recorder, recording)
 
     # Display point in the center of screen for 1500ms
     displayFixationCrossScreen(mainWindow, WINDOW_HEIGHT)
@@ -137,14 +148,12 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     # Pause between displaying the fixation cross and displaying the stimuli
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
+    if firstTime:
+        displayTransitionTime = finishDisplayingStimulus(displayTransitionTime, mediaInfo[1], recorder, recording)
+
     # Display the images, and then pause before the audio is played
     drawStimuli(images + [repeatIcon], mainWindow)
-    if firstTime:
-        mediaInfo = addImagesToRecorder()
-        recording = startRecordingGaze(recorder)
-        startTime = int((recorder.get_time_stamp())['timestamp'])
-    else:
-        core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
+    # core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
     # Prepare for clicks, play the audio file, and start the timer - the user may interact starting now!
     clearClicksAndEvents(mouse)
@@ -182,8 +191,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
     if firstTime:
-        finishWithTPLImages(startTime, mediaInfo, recorder, recording)
-        stopRecordingGaze(recorder, recording)
+        finishDisplayingStimulus(displayTransitionTime, mediaInfo[0], recorder, recording)
     trialDur = trialClock.getTime()
     response = ["check", trialDur]
     clicks.append(response)
@@ -197,8 +205,14 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
 # Give the recorder info about what images are on the screen, so that we can track gazes within those image areas
 def addImagesToRecorder():
     # Add an overall background image (at present this is really just a placeholder)
-    image_for_recorder_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\sample_trial_screen.jpeg"
-    mediaInfo = addBackgroundImageToRecorder(recorder, image_for_recorder_path)
+    stimuli_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\sample_trial_screen.jpeg"
+    fixation_cross_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\fixation_cross.jpeg"
+    buffer_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\buffer_screen.jpeg"
+    media_info = []
+    mediaInfo = addImageToRecorder(recorder, media_info, stimuli_image_path)
+    mediaInfo = addImageToRecorder(recorder, media_info, fixation_cross_image_path)
+    mediaInfo = addImageToRecorder(recorder, media_info, buffer_image_path)
+    # Need a better management system than just 0 = stimuli, 1 = fixation cross
 
     # Add an AOI (area of interest) for each image
     AOI_SIZE = IMAGE_SIZE + IMAGE_OFFSET_FROM_EDGE
