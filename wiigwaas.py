@@ -2,7 +2,7 @@ from random import randint
 from pathlib import *
 from psychopy import core, event, monitors, sound, visual
 from randomizer import latinSquare
-from display_resources import checkForInputOnImages, clearClicksAndEvents, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen,getImages, handleStimuliClick, drawStimuli, listenForQuit, listenForRepeat, playSound, setImagePositions
+from display_resources import checkForInputOnImages, clearClicksAndEvents, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen,getImages, handleStimuliClick, drawStimuli, listenForQuit, listenForRepeat, playSound, setImagePositions, switchDisplays
 from eye_tracking_resources import addAOI, addImageToRecorder, closeRecorder, finishDisplayingStimulus, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
 EYETRACKING_ON = True # Turn this off if you just want to test the experimental flow sans any eyetracking
@@ -19,6 +19,7 @@ IMAGE_SIZE = 425
 REPEAT_ICON_SIZE = 100
 IMAGE_OFFSET_FROM_EDGE = 20
 SUPPORTED_IMAGE_NUMBERS = [1, 2, 3, 4] # Different numbers of images = different on-screen arrangements, so we only want quantities that we are prepared to arrange.
+
 
 def main():
     # Global vars (to be accessible by all functions)
@@ -71,8 +72,6 @@ def main():
         print(imageFileNames)
         
         response = trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime)
-        if firstTime:
-            stopRecordingGaze(recorder, recording)
         firstTime = False
                 
         #Record the data from the last trial
@@ -91,7 +90,7 @@ def createOutputFile(subjID):
     return outputFile
 
 def getExperimentalItems(subjID):
-    EXP_ITEMS_FILE_NAME = 'experimentalItems.csv'
+    EXP_ITEMS_FILE_NAME = 'experimentalItems-small.csv'
     NUMBER_OF_LISTS = 4
     
     # Calculate current list based on subject number.
@@ -113,6 +112,8 @@ def getExperimentalItems(subjID):
 # - If a click is then received in a different image, move the checkmark/box
 # - If a click is then received in the checkmark, end the trial
 def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
+    global currentDisplay
+    global currentDisplayStartTime
     CHECKMARK_SIZE = 100
     WAIT_TIME_BETWEEN_TRIALS = .75 # in seconds
     WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI = .1
@@ -132,26 +133,26 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
     mainWindow.flip()
+    if EYETRACKING_ON:
+        switchDisplays('blank', recorder, recording, mediaInfo)
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
     # Display screen between trials so participant can indicate when ready
-    if firstTime:
-        startTime = int((recorder.get_time_stamp())['timestamp'])
+    if EYETRACKING_ON:
+        switchDisplays('buffer', recorder, recording, mediaInfo)
     displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, BUFFER_TEXT, USER_INPUT_DEVICE, quitExperiment)
 
-    if firstTime:
-        displayTransitionTime = finishDisplayingStimulus(startTime, mediaInfo[2], recorder, recording)
-
     # Display point in the center of screen for 1500ms
+    if EYETRACKING_ON:
+        switchDisplays('fixation_cross', recorder, recording, mediaInfo)
     displayFixationCrossScreen(mainWindow, WINDOW_HEIGHT)
     
     # Pause between displaying the fixation cross and displaying the stimuli
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
-    if firstTime:
-        displayTransitionTime = finishDisplayingStimulus(displayTransitionTime, mediaInfo[1], recorder, recording)
-
     # Display the images, and then pause before the audio is played
+    if EYETRACKING_ON:
+        switchDisplays('stimuli', recorder, recording, mediaInfo)
     drawStimuli(images + [repeatIcon], mainWindow)
     # core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
@@ -190,8 +191,6 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
         checkmarkClicked, prevMouseLocation = checkForInputOnImages(mouse, [check], prevMouseLocation, USER_INPUT_DEVICE)
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
-    if firstTime:
-        finishDisplayingStimulus(displayTransitionTime, mediaInfo[0], recorder, recording)
     trialDur = trialClock.getTime()
     response = ["check", trialDur]
     clicks.append(response)
@@ -208,10 +207,12 @@ def addImagesToRecorder():
     stimuli_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\sample_trial_screen.jpeg"
     fixation_cross_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\fixation_cross.jpeg"
     buffer_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\buffer_screen.jpeg"
-    media_info = []
-    mediaInfo = addImageToRecorder(recorder, media_info, stimuli_image_path)
-    mediaInfo = addImageToRecorder(recorder, media_info, fixation_cross_image_path)
-    mediaInfo = addImageToRecorder(recorder, media_info, buffer_image_path)
+    blank_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\blank_screen.jpeg"
+    media_info = {}
+    mediaInfo = addImageToRecorder(recorder, media_info, stimuli_image_path, "stimuli")
+    mediaInfo = addImageToRecorder(recorder, media_info, fixation_cross_image_path, "fixation_cross")
+    mediaInfo = addImageToRecorder(recorder, media_info, buffer_image_path, "buffer")
+    mediaInfo = addImageToRecorder(recorder, media_info, blank_image_path, "blank")
     # Need a better management system than just 0 = stimuli, 1 = fixation cross
 
     # Add an AOI (area of interest) for each image
@@ -225,17 +226,17 @@ def addImagesToRecorder():
     aoi_name = 'upper_left'
     aoi_color =  'AA0000'
     vertices = ((LEFT_EDGE, TOP_EDGE), (LEFT_EDGE, AOI_SIZE), (LEFT_EDGE + AOI_SIZE, AOI_SIZE), (LEFT_EDGE + AOI_SIZE, TOP_EDGE))
-    addAOI(recorder, mediaInfo[0]['media_id'], aoi_name, aoi_color, vertices)
+    addAOI(recorder, mediaInfo['stimuli']['media_id'], aoi_name, aoi_color, vertices)
 
     aoi_name = 'upper_right'
     aoi_color = '00AA00'
     vertices = ((RIGHT_EDGE - AOI_SIZE, TOP_EDGE), (RIGHT_EDGE - AOI_SIZE, TOP_EDGE + AOI_SIZE), (RIGHT_EDGE, TOP_EDGE + AOI_SIZE), (RIGHT_EDGE, TOP_EDGE))
-    addAOI(recorder, mediaInfo[0]['media_id'], aoi_name, aoi_color, vertices)
+    addAOI(recorder, mediaInfo['stimuli']['media_id'], aoi_name, aoi_color, vertices)
 
     aoi_name = 'lower_middle'
     aoi_color = '0000AA'
     vertices = ((X_MIDPOINT - AOI_SIZE/2,  BOTTOM_EDGE - AOI_SIZE), (X_MIDPOINT - AOI_SIZE/2, BOTTOM_EDGE), (X_MIDPOINT + AOI_SIZE/2, BOTTOM_EDGE), (X_MIDPOINT + AOI_SIZE/2, BOTTOM_EDGE - AOI_SIZE))
-    addAOI(recorder, mediaInfo[0]['media_id'], aoi_name, aoi_color, vertices)
+    addAOI(recorder, mediaInfo['stimuli']['media_id'], aoi_name, aoi_color, vertices)
 
     return mediaInfo
 
@@ -245,6 +246,8 @@ def quitExperiment():
     
     # Quit gracefully
     if EYETRACKING_ON:
+        switchDisplays(None, recorder, recording, mediaInfo)
+        stopRecordingGaze(recorder, recording)
         closeRecorder(recorder)
     outputFile.close()
     core.quit()

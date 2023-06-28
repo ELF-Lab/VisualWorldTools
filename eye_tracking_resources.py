@@ -9,9 +9,9 @@ def addAOI(ttl, image_id, aoi_name, aoi_color, vertices):
     ttl.add_aois_to_image(image_id, aoi_name, aoi_color, vertices, tag_name = tag_name, group_name = group_name)
 
 # Tell TPL what image we're using during a gaze recording
-def addImageToRecorder(ttl, media_info, imagePath):
+def addImageToRecorder(ttl, media_info, imagePath, imageName):
     media_type = "image"
-    media_info.append(ttl.upload_media(imagePath, media_type))
+    media_info.update({imageName: ttl.upload_media(imagePath, media_type)})
 
     return media_info
 

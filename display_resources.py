@@ -1,6 +1,12 @@
 from random import randint
 from pathlib import *
 from psychopy import core, event, gui, visual
+# Ideally we should minimze imports from here, but there is some overlap between what's on screen and what TPL needs to know.
+from eye_tracking_resources import finishDisplayingStimulus
+
+# These need to be updated throughout the experiment, to send messages about what is being shown on screen
+currentDisplay = None
+currentDisplayStartTime = None
 
 def checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
     if USER_INPUT_DEVICE == 'mouse':
@@ -249,3 +255,14 @@ def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon, WIND
         checks[random_ordering_of_images[i]].setPos([imagePosition[0], imagePosition[1] - checkOffset if imagePosition[1] != bottom else imagePosition[1] + checkOffset])
 
     return images, checks, repeatIcon
+
+# Either the new or current display can be None, indicating this is the last or first display
+def switchDisplays(newDisplayName, recorder, recording, mediaInfo):
+    global currentDisplay
+    global currentDisplayStartTime
+    # Store the start time for the new display (and finish with the old one, if there was one).
+    if currentDisplay == None:
+        currentDisplayStartTime = int((recorder.get_time_stamp())['timestamp'])
+    else:
+        currentDisplayStartTime = finishDisplayingStimulus(currentDisplayStartTime, mediaInfo[currentDisplay], recorder, recording)
+    currentDisplay = newDisplayName # Update the current display
