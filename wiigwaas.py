@@ -48,7 +48,7 @@ def main():
     # Setting up the gaze recorder takes a few seconds, so let's begin displaying a loading screen here!
     displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Setting up...")
     if EYETRACKING_ON:
-        recorder = setUpRecorder(mainWindow, mouse)
+        recorder = setUpRecorder(mainWindow, mouse, str(subjID))
         mediaInfo = addImagesToRecorder()
         recording = startRecordingGaze(recorder)
     #tracker = setUpEyeTracker(mainWindow)

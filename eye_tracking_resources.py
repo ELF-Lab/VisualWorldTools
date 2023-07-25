@@ -2,6 +2,8 @@ from psychopy.iohub import launchHubServer
 from Titta.titta import Titta
 from Titta.titta.TalkToProLab import TalkToProLab
 
+participantID = None
+
 def addAOI(ttl, image_id, aoi_name, aoi_color, vertices):
     tag_name = 'test_tag'
     group_name = 'test_group'
@@ -39,11 +41,13 @@ def setUpEyeTracker(mainWindow):
 
     return tracker
 
-def setUpRecorder(mainWindow, mouse):
+# Note that participantName should be a string
+def setUpRecorder(mainWindow, mouse, participantName):
+    global participantID
+
     # Specify the kind of eyetracker we are using, and an identifier for the participant
     settings = Titta.get_defaults("Tobii Pro Fusion")
-    settings.FILENAME = 'another_test'
-    participantID = settings.FILENAME
+    settings.FILENAME = participantName
 
     # Create the eyetracker object (doesn't actually interact with the eyetracker itself here, just preparing for TPL)
     tracker = Titta.Connect(settings)
@@ -51,7 +55,7 @@ def setUpRecorder(mainWindow, mouse):
 
     # Create the connection with TPL
     proLabConnection = TalkToProLab(project_name = None, dummy_mode = False)
-    proLabConnection.add_participant('another_test')
+    participantID = (proLabConnection.add_participant(participantName))['participant_id']
 
     calibrate(tracker, mainWindow, mouse)
 
@@ -63,9 +67,6 @@ def startRecordingGaze(proLabConnection):
     assert state['state'] == 'ready', state['state']
 
     ## Start recording (Note: you have to click on the Record Tab first!)
-    participants = proLabConnection.list_participants()['participant_list']
-    assert(len(participants) == 1)
-    participantID = (participants[0])['participant_id']
     recording = proLabConnection.start_recording("image_viewing", participantID, screen_width=1920, screen_height=1080)
 
     return recording
