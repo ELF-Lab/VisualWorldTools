@@ -8,16 +8,6 @@ from eye_tracking_resources import finishDisplayingStimulus
 currentDisplay = None
 currentDisplayStartTime = None
 
-def checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
-    if USER_INPUT_DEVICE == 'mouse':
-        clickedImage, prevMouseLocation = checkForClickOnImages(mouse, images, prevMouseLocation)
-    elif USER_INPUT_DEVICE == 'touch':
-        clickedImage, prevMouseLocation = checkForTapOnImages(mouse, images, prevMouseLocation)
-    else:
-        print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
-        core.quit()
-    return clickedImage, prevMouseLocation
-
 # Given a list of images, returns the one that is being clicked (or None)
 # Hold for the duration of the click - so that when this function ends, the click is over
 def checkForClickOnImages(mouse, images, prevMouseLocation):
@@ -29,6 +19,16 @@ def checkForClickOnImages(mouse, images, prevMouseLocation):
                 pass
             # Not necessary, but keeps things consistent with the use of checkForTap
             prevMouseLocation = mouse.getPos()
+    return clickedImage, prevMouseLocation
+
+def checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
+    if USER_INPUT_DEVICE == 'mouse':
+        clickedImage, prevMouseLocation = checkForClickOnImages(mouse, images, prevMouseLocation)
+    elif USER_INPUT_DEVICE == 'touch':
+        clickedImage, prevMouseLocation = checkForTapOnImages(mouse, images, prevMouseLocation)
+    else:
+        print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
+        core.quit()
     return clickedImage, prevMouseLocation
 
 # Checks for a single tap on an image
@@ -45,17 +45,6 @@ def checkForTapOnImages(mouse, images, prevMouseLocation):
                 clickedImage = image
                 prevMouseLocation = mouse_location # Update for the next check
     return clickedImage, prevMouseLocation
-
-def checkForTapAnywhere(mouse, prevMouseLocation):
-    tapped = False
-    mouse_location = mouse.getPos()
-    # If the mouse moved... (check x and y coords)
-    if not(mouse_location[0] == prevMouseLocation[0] and mouse_location[1] == prevMouseLocation[1]):
-        tapped = True
-    
-    prevMouseLocation = mouse_location
-
-    return tapped, prevMouseLocation
 
 def checkForClickAnywhere(mouse, prevMouseLocation):
     clicked = False
@@ -76,6 +65,17 @@ def checkForInputAnywhere(mouse, prevMouseLocation, USER_INPUT_DEVICE):
         print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
         core.quit()
     return inputReceived, prevMouseLocation
+
+def checkForTapAnywhere(mouse, prevMouseLocation):
+    tapped = False
+    mouse_location = mouse.getPos()
+    # If the mouse moved... (check x and y coords)
+    if not(mouse_location[0] == prevMouseLocation[0] and mouse_location[1] == prevMouseLocation[1]):
+        tapped = True
+
+    prevMouseLocation = mouse_location
+
+    return tapped, prevMouseLocation
 
 def clearClicksAndEvents(mouse):
     mouse.clickReset()
@@ -122,13 +122,6 @@ def displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, waitText):
         color = "black")
     textScreen.draw()
     mainWindow.flip()
-
-# Listens for a keyboard shortcut that tells us to quit the experiment - if detected, it runs the given quit routine
-def listenForQuit(quitFunction):
-    quitKey = 'escape'
-    keys = event.getKeys()
-    if quitKey in keys:
-        quitFunction()
 
 def drawStimuli(stimuli_list, mainWindow):
     for stimulus in stimuli_list:
@@ -197,6 +190,13 @@ def handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, t
     drawStimuli(images + [repeatIcon, selectionBox, check], mainWindow)
     
     return check
+
+# Listens for a keyboard shortcut that tells us to quit the experiment - if detected, it runs the given quit routine
+def listenForQuit(quitFunction):
+    quitKey = 'escape'
+    keys = event.getKeys()
+    if quitKey in keys:
+        quitFunction()
 
 def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, USER_INPUT_DEVICE):
     repeatClicked, prevMouseLocation = checkForInputOnImages(mouse, [repeatIcon], prevMouseLocation, USER_INPUT_DEVICE)

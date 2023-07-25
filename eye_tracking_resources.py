@@ -15,12 +15,6 @@ def addImageToRecorder(ttl, media_info, imagePath, imageName):
 
     return media_info
 
-# We need to tell TPL when we're doing with the relevant image
-def finishDisplayingStimulus(startTime, mediaItem, ttl, recording):
-    endTime = int((ttl.get_time_stamp())['timestamp'])
-    ttl.send_stimulus_event(recording['recording_id'], start_timestamp = str(startTime), media_id = mediaItem['media_id'], end_timestamp = endTime)
-    return endTime
-
 def calibrate(tracker, mainWindow, mouse):
     tracker.calibrate(mainWindow)
     # For some reason, this calibration leaves the mouse invisible. So make it visible again before returning.
@@ -32,22 +26,11 @@ def closeRecorder(ttl):
     ttl.endConnectionThread()
     ttl.disconnect()
 
-def startRecordingGaze(proLabConnection):
-    # Check that Lab is ready to start a recording
-    state = proLabConnection.get_state()
-    assert state['state'] == 'ready', state['state']
-
-    ## Start recording (Note: you have to click on the Record Tab first!)
-    participants = proLabConnection.list_participants()['participant_list']
-    assert(len(participants) == 1)
-    participantID = (participants[0])['participant_id']
-    recording = proLabConnection.start_recording("image_viewing", participantID, screen_width=1920, screen_height=1080)
-
-    return recording
-    
-def stopRecordingGaze(proLabConnection, recording):
-    proLabConnection.stop_recording()
-    proLabConnection.finalize_recording(recording['recording_id'])
+# We need to tell TPL when we're doing with the relevant image
+def finishDisplayingStimulus(startTime, mediaItem, ttl, recording):
+    endTime = int((ttl.get_time_stamp())['timestamp'])
+    ttl.send_stimulus_event(recording['recording_id'], start_timestamp = str(startTime), media_id = mediaItem['media_id'], end_timestamp = endTime)
+    return endTime
 
 def setUpEyeTracker(mainWindow):
     iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}
@@ -73,3 +56,20 @@ def setUpRecorder(mainWindow, mouse):
     calibrate(tracker, mainWindow, mouse)
 
     return proLabConnection
+
+def startRecordingGaze(proLabConnection):
+    # Check that Lab is ready to start a recording
+    state = proLabConnection.get_state()
+    assert state['state'] == 'ready', state['state']
+
+    ## Start recording (Note: you have to click on the Record Tab first!)
+    participants = proLabConnection.list_participants()['participant_list']
+    assert(len(participants) == 1)
+    participantID = (participants[0])['participant_id']
+    recording = proLabConnection.start_recording("image_viewing", participantID, screen_width=1920, screen_height=1080)
+
+    return recording
+
+def stopRecordingGaze(proLabConnection, recording):
+    proLabConnection.stop_recording()
+    proLabConnection.finalize_recording(recording['recording_id'])
