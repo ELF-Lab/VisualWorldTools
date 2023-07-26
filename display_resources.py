@@ -1,6 +1,7 @@
 from random import randint
 from pathlib import *
 from psychopy import core, event, gui, visual
+from config import *
 # Ideally we should minimze imports from here, but there is some overlap between what's on screen and what TPL needs to know.
 from eye_tracking_resources import finishDisplayingStimulus
 
@@ -81,16 +82,23 @@ def clearClicksAndEvents(mouse):
     mouse.clickReset()
     event.clearEvents()
 
+def displayBlankScreen(recorder, recording, mediaInfo, mainWindow):
+    if EYETRACKING_ON:
+        switchDisplays('blank', recorder, recording, mediaInfo)
+    mainWindow.flip()
+
 # Displays a buffer screen with given text, and only proceeds once the user clicks
-def displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText, USER_INPUT_DEVICE, quitFunction):
-    displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText)
+def displayBufferScreen(recorder, recording, mediaInfo, mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText, USER_INPUT_DEVICE, quitFunction):
+    displayTextScreen(recorder, recording, mediaInfo, mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText, "buffer")
     inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, mouse.getPos(), USER_INPUT_DEVICE)
     while not inputReceived: # Wait for user input (anywhere on screen)
         listenForQuit(quitFunction) # Allow the user to quit at this stage, too
         inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, prevMouseLocation, USER_INPUT_DEVICE)
 
 # Displays a fixation cross on the screen for 1500ms 
-def displayFixationCrossScreen(mainWindow, WINDOW_HEIGHT):
+def displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow, WINDOW_HEIGHT):
+    if EYETRACKING_ON:
+        switchDisplays('fixation_cross', recorder, recording, mediaInfo)
     fixationScreen = visual.TextStim(
         mainWindow,
         text = '+',
@@ -103,6 +111,13 @@ def displayFixationCrossScreen(mainWindow, WINDOW_HEIGHT):
     core.wait(1.5) # 1500ms
     mainWindow.flip()
 
+def displayStimuli(recorder, recording, mediaInfo, stimuli_list, mainWindow):
+    if EYETRACKING_ON:
+        switchDisplays('stimuli', recorder, recording, mediaInfo)
+    for stimulus in stimuli_list:
+        stimulus.draw()
+    mainWindow.flip()
+
 # Displays a dialog box to get subject number
 def displaySubjIDDialog():
     guiBox = gui.Dlg()
@@ -112,20 +127,18 @@ def displaySubjIDDialog():
     return subjID
 
 # Displays a screen with given text (how to proceed from this screen is not a part of this function!)
-def displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, waitText):
+# displayName can be None (if this is not a display for the recording process, e.g. the quitting screen)
+def displayTextScreen(recorder, recording, mediaInfo, mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, textToDisplay, displayName):
+    if EYETRACKING_ON:
+        switchDisplays(displayName, recorder, recording, mediaInfo)
     textScreen = visual.TextStim(
         mainWindow,
-        text = waitText,
+        text = textToDisplay,
         pos = (0.0, 0.0),
         height = WINDOW_HEIGHT / 20,
         wrapWidth = WINDOW_WIDTH,
         color = "black")
     textScreen.draw()
-    mainWindow.flip()
-
-def drawStimuli(stimuli_list, mainWindow):
-    for stimulus in stimuli_list:
-        stimulus.draw()
     mainWindow.flip()
     
 # Get the images to be displayed for the given trial.
@@ -158,7 +171,7 @@ def getRandomImageOrder(numImages):
 
     return randomly_ordered_list
 
-def handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks, mainWindow):
+def handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, recording, mediaInfo, mainWindow):
     numberOfImages = len(images)
 
     # Determine the names of the images we're dealing with. These name lists match their order in the experimental items input file!
@@ -187,7 +200,7 @@ def handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, t
     clicks.append(response)
 
     # Re-draw to include the selection box and checkmark
-    drawStimuli(images + [repeatIcon, selectionBox, check], mainWindow)
+    displayStimuli(recorder, recording, mediaInfo, images + [repeatIcon, selectionBox, check], mainWindow)
     
     return check
 
@@ -257,12 +270,17 @@ def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon, WIND
     return images, checks, repeatIcon
 
 # Either the new or current display can be None, indicating this is the last or first display
+# If newDisplayName = None, we only finish with the previous display, we don't add a new one
+# If currentDisplay = None, we do not finish any previous display (because we're saying there isn't one!), we merely note the start time of this new screen
+# If both are None, we are neither beginning nor finishing with a screen (i.e. this is a dummy call - we don't want TPL to know about this display at all)
 def switchDisplays(newDisplayName, recorder, recording, mediaInfo):
     global currentDisplay
     global currentDisplayStartTime
     # Store the start time for the new display (and finish with the old one, if there was one).
-    if currentDisplay == None:
+    if currentDisplay == None and newDisplayName == None: # No switch at all
+        pass
+    elif currentDisplay == None: # No previous display, but we're starting a new one
         currentDisplayStartTime = int((recorder.get_time_stamp())['timestamp'])
-    else:
+    else: # We are finishing with a previous display
         currentDisplayStartTime = finishDisplayingStimulus(currentDisplayStartTime, mediaInfo[currentDisplay], recorder, recording)
     currentDisplay = newDisplayName # Update the current display

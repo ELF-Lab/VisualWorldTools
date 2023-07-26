@@ -2,10 +2,9 @@ from random import randint
 from pathlib import *
 from psychopy import core, event, monitors, sound, visual
 from randomizer import latinSquare
-from display_resources import checkForInputOnImages, clearClicksAndEvents, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen,getImages, handleStimuliClick, drawStimuli, listenForQuit, listenForRepeat, playSound, setImagePositions, switchDisplays
-from eye_tracking_resources import addAOI, addImageToRecorder, closeRecorder, finishDisplayingStimulus, setUpRecorder, startRecordingGaze, stopRecordingGaze
-
-EYETRACKING_ON = True # Turn this off if you just want to test the experimental flow sans any eyetracking
+from config import *
+from display_resources import checkForInputOnImages, clearClicksAndEvents, displayBlankScreen, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen,getImages, handleStimuliClick, displayStimuli, listenForQuit, listenForRepeat, playSound, setImagePositions
+from eye_tracking_resources import addAOI, addImageToRecorder, closeRecorder, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 WINDOW_WIDTH = 1920
@@ -46,16 +45,20 @@ def main():
     clearClicksAndEvents(mouse)
     
     # Setting up the gaze recorder takes a few seconds, so let's begin displaying a loading screen here!
-    displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Setting up...")
+    displayTextScreen(None, None, None, mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Setting up...", None)
     if EYETRACKING_ON:
         recorder = setUpRecorder(mainWindow, mouse, str(subjID))
         mediaInfo = addImagesToRecorder()
         recording = startRecordingGaze(recorder)
+    else:
+        recorder = None
+        mediaInfo = None
+        recording = None
     #tracker = setUpEyeTracker(mainWindow)
 
     # *** BEGIN EXPERIMENT ***
     # Display welcome screen until the user clicks
-    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.', USER_INPUT_DEVICE, quitExperiment)
+    displayBufferScreen(recorder, mediaInfo, recording, mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.', USER_INPUT_DEVICE, quitExperiment)
     #calibrate(tracker)
 
     firstTime = EYETRACKING_ON
@@ -132,28 +135,20 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
 
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
-    mainWindow.flip()
-    if EYETRACKING_ON:
-        switchDisplays('blank', recorder, recording, mediaInfo)
+    displayBlankScreen(recorder, recording, mediaInfo, mainWindow)
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
     # Display screen between trials so participant can indicate when ready
-    if EYETRACKING_ON:
-        switchDisplays('buffer', recorder, recording, mediaInfo)
-    displayBufferScreen(mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, BUFFER_TEXT, USER_INPUT_DEVICE, quitExperiment)
+    displayBufferScreen(recorder, recording, mediaInfo, mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, BUFFER_TEXT, USER_INPUT_DEVICE, quitExperiment)
 
     # Display point in the center of screen for 1500ms
-    if EYETRACKING_ON:
-        switchDisplays('fixation_cross', recorder, recording, mediaInfo)
-    displayFixationCrossScreen(mainWindow, WINDOW_HEIGHT)
+    displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow, WINDOW_HEIGHT)
     
     # Pause between displaying the fixation cross and displaying the stimuli
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
     # Display the images, and then pause before the audio is played
-    if EYETRACKING_ON:
-        switchDisplays('stimuli', recorder, recording, mediaInfo)
-    drawStimuli(images + [repeatIcon], mainWindow)
+    displayStimuli(recorder, recording, mediaInfo, images + [repeatIcon], mainWindow)
     # core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
     # Prepare for clicks, play the audio file, and start the timer - the user may interact starting now!
@@ -172,7 +167,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
         imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE)
 
     # Now, we've received a first click on one of the images
-    check = handleStimuliClick(imageClicked,images, checks, selectionBox, repeatIcon, trialClock, clicks, mainWindow)
+    check = handleStimuliClick(imageClicked,images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, recording, mediaInfo, mainWindow)
 
     # Now we wait in this loop until the checkmark is ultimately clicked
     checkmarkClicked = False
@@ -185,7 +180,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
         # Always listening for a click on an image
         imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE)
         if imageClicked:
-            check = handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks, mainWindow)
+            check = handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, recording, mediaInfo, mainWindow)
 
         # Always listening for a click on the checkmark
         checkmarkClicked, prevMouseLocation = checkForInputOnImages(mouse, [check], prevMouseLocation, USER_INPUT_DEVICE)
@@ -242,11 +237,10 @@ def addImagesToRecorder():
 
 # This is used inside both main and trial (as the user may quit during a trial)
 def quitExperiment():
-    displayTextScreen(mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Quitting...")
+    displayTextScreen(recorder, recording, mediaInfo, mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Quitting...", None)
     
     # Quit gracefully
     if EYETRACKING_ON:
-        switchDisplays(None, recorder, recording, mediaInfo)
         stopRecordingGaze(recorder, recording)
         closeRecorder(recorder)
     outputFile.close()
