@@ -17,7 +17,7 @@ def addImageToRecorder(ttl, media_info, imagePath, imageName):
 
     return media_info
 
-def calibrate(tracker, mainWindow, mouse):
+def calibrateRecorder(tracker, mainWindow, mouse):
     tracker.calibrate(mainWindow)
     # For some reason, this calibration leaves the mouse invisible. So make it visible again before returning.
     mouse.setVisible(1)
@@ -33,13 +33,6 @@ def finishDisplayingStimulus(startTime, mediaItem, ttl, recording):
     endTime = int((ttl.get_time_stamp())['timestamp'])
     ttl.send_stimulus_event(recording['recording_id'], start_timestamp = str(startTime), media_id = mediaItem['media_id'], end_timestamp = endTime)
     return endTime
-
-def setUpEyeTracker(mainWindow):
-    iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}
-    io = launchHubServer(window = mainWindow, **iohub_config)
-    tracker = io.getDevice('tracker')
-
-    return tracker
 
 # Note that participantName should be a string
 def setUpRecorder(mainWindow, mouse, participantName):
@@ -57,7 +50,7 @@ def setUpRecorder(mainWindow, mouse, participantName):
     proLabConnection = TalkToProLab(project_name = None, dummy_mode = False)
     participantID = (proLabConnection.add_participant(participantName))['participant_id']
 
-    calibrate(tracker, mainWindow, mouse)
+    calibrateRecorder(tracker, mainWindow, mouse)
 
     return proLabConnection
 
@@ -74,3 +67,13 @@ def startRecordingGaze(proLabConnection):
 def stopRecordingGaze(proLabConnection, recording):
     proLabConnection.stop_recording()
     proLabConnection.finalize_recording(recording['recording_id'])
+
+# **************
+# This function is not being used currently - it is for eye-tracking with Tobii directly, rather than via Tobii Pro Lab.
+def setUpEyeTracker(mainWindow):
+    iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}
+    io = launchHubServer(window = mainWindow, **iohub_config)
+    tracker = io.getDevice('tracker')
+
+    return tracker
+# **************

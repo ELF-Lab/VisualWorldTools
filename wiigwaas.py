@@ -51,12 +51,10 @@ def main():
         recorder = None
         mediaInfo = None
         recording = None
-    #tracker = setUpEyeTracker(mainWindow)
 
     # *** BEGIN EXPERIMENT ***
     # Display welcome screen until the user clicks
     displayBufferScreen(recorder, mediaInfo, recording, mainWindow, mouse, 'Boozhoo! Biindigen.', quitExperiment)
-    #calibrate(tracker)
 
     firstTime = EYETRACKING_ON
     # Run trials!
@@ -205,7 +203,6 @@ def addImagesToRecorder():
     mediaInfo = addImageToRecorder(recorder, media_info, fixation_cross_image_path, "fixation_cross")
     mediaInfo = addImageToRecorder(recorder, media_info, buffer_image_path, "buffer")
     mediaInfo = addImageToRecorder(recorder, media_info, blank_image_path, "blank")
-    # Need a better management system than just 0 = stimuli, 1 = fixation cross
 
     # Add an AOI (area of interest) for each image
     AOI_SIZE = IMAGE_SIZE + IMAGE_OFFSET_FROM_EDGE
