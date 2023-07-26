@@ -7,9 +7,6 @@ from display_resources import checkForInputOnImages, clearClicksAndEvents, displ
 from eye_tracking_resources import addAOI, addImageToRecorder, closeRecorder, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
-WINDOW_WIDTH = 1920
-WINDOW_HEIGHT = 1080
-USER_INPUT_DEVICE = 'mouse' # 'mouse' or 'touch'
 # These two are taken from read_me_TalkToProLab.py
 # All I know is that they make the calibration work properly (rather than only calibrating a smaller central subarea of the screen)
 SCREEN_WIDTH = 52.5  # cm
@@ -45,7 +42,7 @@ def main():
     clearClicksAndEvents(mouse)
     
     # Setting up the gaze recorder takes a few seconds, so let's begin displaying a loading screen here!
-    displayTextScreen(None, None, None, mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Setting up...", None)
+    displayTextScreen(None, None, None, mainWindow, "Setting up...", None)
     if EYETRACKING_ON:
         recorder = setUpRecorder(mainWindow, mouse, str(subjID))
         mediaInfo = addImagesToRecorder()
@@ -58,7 +55,7 @@ def main():
 
     # *** BEGIN EXPERIMENT ***
     # Display welcome screen until the user clicks
-    displayBufferScreen(recorder, mediaInfo, recording, mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, 'Boozhoo! Biindigen.', USER_INPUT_DEVICE, quitExperiment)
+    displayBufferScreen(recorder, mediaInfo, recording, mainWindow, mouse, 'Boozhoo! Biindigen.', quitExperiment)
     #calibrate(tracker)
 
     firstTime = EYETRACKING_ON
@@ -131,7 +128,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     # Get the relevant images
     images, checks, repeatIcon, selectionBox = getImages(imageFileNames, IMAGE_SIZE, CHECKMARK_SIZE, REPEAT_ICON_SIZE, mainWindow)
     # Determine the position of each image
-    images, checks, repeatIcon = setImagePositions(IMAGE_SIZE, CHECKMARK_SIZE, images, checks, repeatIcon, WINDOW_WIDTH, WINDOW_HEIGHT, IMAGE_OFFSET_FROM_EDGE)
+    images, checks, repeatIcon = setImagePositions(IMAGE_SIZE, CHECKMARK_SIZE, images, checks, repeatIcon, IMAGE_OFFSET_FROM_EDGE)
 
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
@@ -139,10 +136,10 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
     # Display screen between trials so participant can indicate when ready
-    displayBufferScreen(recorder, recording, mediaInfo, mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, BUFFER_TEXT, USER_INPUT_DEVICE, quitExperiment)
+    displayBufferScreen(recorder, recording, mediaInfo, mainWindow, mouse, BUFFER_TEXT, quitExperiment)
 
     # Display point in the center of screen for 1500ms
-    displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow, WINDOW_HEIGHT)
+    displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow)
     
     # Pause between displaying the fixation cross and displaying the stimuli
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
@@ -163,8 +160,8 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     while not imageClicked:
         # Always be listening for a command to quit the program, or repeat the audio          
         listenForQuit(quitExperiment)
-        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, USER_INPUT_DEVICE)
-        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE)
+        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse)
+        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation)
 
     # Now, we've received a first click on one of the images
     check = handleStimuliClick(imageClicked,images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, recording, mediaInfo, mainWindow)
@@ -175,15 +172,15 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
         
         # Always be listening for a command to quit the program, or repeat the audio  
         listenForQuit(quitExperiment)
-        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, USER_INPUT_DEVICE)
+        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse)
         
         # Always listening for a click on an image
-        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE)
+        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation)
         if imageClicked:
             check = handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, recording, mediaInfo, mainWindow)
 
         # Always listening for a click on the checkmark
-        checkmarkClicked, prevMouseLocation = checkForInputOnImages(mouse, [check], prevMouseLocation, USER_INPUT_DEVICE)
+        checkmarkClicked, prevMouseLocation = checkForInputOnImages(mouse, [check], prevMouseLocation)
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
     trialDur = trialClock.getTime()
@@ -237,7 +234,7 @@ def addImagesToRecorder():
 
 # This is used inside both main and trial (as the user may quit during a trial)
 def quitExperiment():
-    displayTextScreen(recorder, recording, mediaInfo, mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, "Quitting...", None)
+    displayTextScreen(recorder, recording, mediaInfo, mainWindow, "Quitting...", None)
     
     # Quit gracefully
     if EYETRACKING_ON:

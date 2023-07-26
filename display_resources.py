@@ -22,7 +22,7 @@ def checkForClickOnImages(mouse, images, prevMouseLocation):
             prevMouseLocation = mouse.getPos()
     return clickedImage, prevMouseLocation
 
-def checkForInputOnImages(mouse, images, prevMouseLocation, USER_INPUT_DEVICE):
+def checkForInputOnImages(mouse, images, prevMouseLocation):
     if USER_INPUT_DEVICE == 'mouse':
         clickedImage, prevMouseLocation = checkForClickOnImages(mouse, images, prevMouseLocation)
     elif USER_INPUT_DEVICE == 'touch':
@@ -57,7 +57,7 @@ def checkForClickAnywhere(mouse, prevMouseLocation):
     
     return clicked, prevMouseLocation
 
-def checkForInputAnywhere(mouse, prevMouseLocation, USER_INPUT_DEVICE):
+def checkForInputAnywhere(mouse, prevMouseLocation):
     if USER_INPUT_DEVICE == 'mouse':
         inputReceived, prevMouseLocation = checkForClickAnywhere(mouse, prevMouseLocation)
     elif USER_INPUT_DEVICE == 'touch':
@@ -88,15 +88,15 @@ def displayBlankScreen(recorder, recording, mediaInfo, mainWindow):
     mainWindow.flip()
 
 # Displays a buffer screen with given text, and only proceeds once the user clicks
-def displayBufferScreen(recorder, recording, mediaInfo, mainWindow, mouse, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText, USER_INPUT_DEVICE, quitFunction):
-    displayTextScreen(recorder, recording, mediaInfo, mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, bufferText, "buffer")
-    inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, mouse.getPos(), USER_INPUT_DEVICE)
+def displayBufferScreen(recorder, recording, mediaInfo, mainWindow, mouse, bufferText, quitFunction):
+    displayTextScreen(recorder, recording, mediaInfo, mainWindow, bufferText, "buffer")
+    inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, mouse.getPos())
     while not inputReceived: # Wait for user input (anywhere on screen)
         listenForQuit(quitFunction) # Allow the user to quit at this stage, too
-        inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, prevMouseLocation, USER_INPUT_DEVICE)
+        inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, prevMouseLocation)
 
 # Displays a fixation cross on the screen for 1500ms 
-def displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow, WINDOW_HEIGHT):
+def displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow):
     if EYETRACKING_ON:
         switchDisplays('fixation_cross', recorder, recording, mediaInfo)
     fixationScreen = visual.TextStim(
@@ -128,7 +128,7 @@ def displaySubjIDDialog():
 
 # Displays a screen with given text (how to proceed from this screen is not a part of this function!)
 # displayName can be None (if this is not a display for the recording process, e.g. the quitting screen)
-def displayTextScreen(recorder, recording, mediaInfo, mainWindow, WINDOW_WIDTH, WINDOW_HEIGHT, textToDisplay, displayName):
+def displayTextScreen(recorder, recording, mediaInfo, mainWindow, textToDisplay, displayName):
     if EYETRACKING_ON:
         switchDisplays(displayName, recorder, recording, mediaInfo)
     textScreen = visual.TextStim(
@@ -211,8 +211,8 @@ def listenForQuit(quitFunction):
     if quitKey in keys:
         quitFunction()
 
-def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, USER_INPUT_DEVICE):
-    repeatClicked, prevMouseLocation = checkForInputOnImages(mouse, [repeatIcon], prevMouseLocation, USER_INPUT_DEVICE)
+def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse):
+    repeatClicked, prevMouseLocation = checkForInputOnImages(mouse, [repeatIcon], prevMouseLocation)
     if repeatClicked:
         playSound(audio)
         pic = "replay"
@@ -226,7 +226,7 @@ def playSound(audio):
     audio.play()
 
     # Note that setPos defines the position of the image's /centre/, and screen positions are determined based on the /centre/ of the screen being (0,0)
-def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon, WINDOW_WIDTH, WINDOW_HEIGHT, IMAGE_OFFSET_FROM_EDGE):
+def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon, IMAGE_OFFSET_FROM_EDGE):
     numberOfImages = len(images)
 
     # The repeat button's position is always the same, no randomization needed
