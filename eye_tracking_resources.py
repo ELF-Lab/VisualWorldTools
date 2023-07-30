@@ -1,8 +1,10 @@
 from psychopy.iohub import launchHubServer
 from Titta.titta import Titta
 from Titta.titta.TalkToProLab import TalkToProLab
+import datetime
 
 participantID = None
+tracker = None
 
 def addAOI(ttl, image_id, aoi_name, aoi_color, vertices):
     tag_name = 'test_tag'
@@ -28,6 +30,35 @@ def closeRecorder(ttl):
     ttl.endConnectionThread()
     ttl.disconnect()
 
+def driftCheck(mainWindow, left, right, top, bottom):
+    TIME_BEFORE_RECALIBRATING = 10 # seconds
+    TIME_REQUIRED_FOR_FIXATION = 3
+
+    tracker.start_drift_check()
+    driftCheckStartTime = datetime.datetime.now()
+    driftCheckPassed = False
+    # For a given period, wait to see if they are looking at the fixation cross
+    while (datetime.datetime.now() - driftCheckStartTime).seconds < TIME_BEFORE_RECALIBRATING and not driftCheckPassed:
+        gazePos = tracker.get_gaze_data(mainWindow)
+        xGazePos = gazePos[0][0][0] # Using left eye
+        yGazePos = gazePos[0][0][1]
+        # Check if current gaze position is within the range considered to be on the fixation cross
+        gazeOnTarget = False
+        if xGazePos > left and xGazePos < right and yGazePos > top and yGazePos < bottom:
+            gazeOnTarget = True
+            fixationStartTime = datetime.datetime.now()
+            # For the target fixation duration, check if they continue to look at the target
+            while (datetime.datetime.now() - fixationStartTime).seconds < TIME_REQUIRED_FOR_FIXATION and gazeOnTarget:
+                if not (xGazePos > left and xGazePos < right and yGazePos > top and yGazePos < bottom):
+                    gazeOnTarget = False
+
+        # If the var is True at this point, then it must have remained True for long enough to consider that a satisfactory fixation!
+        if gazeOnTarget:
+            driftCheckPassed = True
+
+    tracker.stop_drift_check()
+    return driftCheckPassed
+
 # We need to tell TPL when we're doing with the relevant image
 def finishDisplayingStimulus(startTime, mediaItem, ttl, recording):
     endTime = int((ttl.get_time_stamp())['timestamp'])
@@ -37,6 +68,7 @@ def finishDisplayingStimulus(startTime, mediaItem, ttl, recording):
 # Note that participantName should be a string
 def setUpRecorder(mainWindow, mouse, participantName):
     global participantID
+    global tracker
 
     # Specify the kind of eyetracker we are using, and an identifier for the participant
     settings = Titta.get_defaults("Tobii Pro Fusion")

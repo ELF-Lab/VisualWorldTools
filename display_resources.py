@@ -3,7 +3,7 @@ from pathlib import *
 from psychopy import core, event, gui, visual
 from config import *
 # Ideally we should minimze imports from here, but there is some overlap between what's on screen and what TPL needs to know.
-from eye_tracking_resources import finishDisplayingStimulus
+from eye_tracking_resources import finishDisplayingStimulus, driftCheck
 
 # These need to be updated throughout the experiment, to send messages about what is being shown on screen
 currentDisplay = None
@@ -108,7 +108,17 @@ def displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow):
         color = "black")
     fixationScreen.draw()
     mainWindow.flip()
-    core.wait(1.5) # 1500ms
+    # Don't proceed until drift check is complete
+    # All measurements in pixels
+    fixationZoneSize = 100
+    leftFixationBoundary = WINDOW_WIDTH / 2 - fixationZoneSize / 2
+    rightFixationBoundary = WINDOW_WIDTH / 2 + fixationZoneSize / 2
+    topFixationBoundary = WINDOW_HEIGHT / 2 - fixationZoneSize / 2
+    bottomFixationBoundary = WINDOW_HEIGHT / 2 + fixationZoneSize / 2
+    if driftCheck(mainWindow, leftFixationBoundary, rightFixationBoundary, topFixationBoundary, bottomFixationBoundary):
+        print("Drift check passed.")
+    else:
+        print("DRIFT CHECK FAILED!")
     mainWindow.flip()
 
 def displayStimuli(recorder, recording, mediaInfo, stimuli_list, mainWindow):
