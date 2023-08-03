@@ -137,7 +137,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     displayBufferScreen(recorder, recording, mediaInfo, mainWindow, mouse, BUFFER_TEXT, quitExperiment)
 
     # Display point in the center of screen for 1500ms
-    displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow)
+    displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow, mouse)
     
     # Pause between displaying the fixation cross and displaying the stimuli
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)

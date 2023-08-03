@@ -19,7 +19,7 @@ def addImageToRecorder(ttl, media_info, imagePath, imageName):
 
     return media_info
 
-def calibrateRecorder(tracker, mainWindow, mouse):
+def calibrateRecorder(mainWindow, mouse):
     tracker.calibrate(mainWindow)
     # For some reason, this calibration leaves the mouse invisible. So make it visible again before returning.
     mouse.setVisible(1)
@@ -30,34 +30,50 @@ def closeRecorder(ttl):
     ttl.endConnectionThread()
     ttl.disconnect()
 
-def driftCheck(mainWindow, left, right, top, bottom):
+def driftCheck(mainWindow, mouse, left, right, top, bottom):
     TIME_BEFORE_RECALIBRATING = 10 # seconds
-    TIME_REQUIRED_FOR_FIXATION = 3
+    TIME_REQUIRED_FOR_FIXATION = 0.8
 
     tracker.start_drift_check()
     driftCheckStartTime = datetime.datetime.now()
     driftCheckPassed = False
     # For a given period, wait to see if they are looking at the fixation cross
     while (datetime.datetime.now() - driftCheckStartTime).seconds < TIME_BEFORE_RECALIBRATING and not driftCheckPassed:
-        gazePos = tracker.get_gaze_data(mainWindow)
-        xGazePos = gazePos[0][0][0] # Using left eye
-        yGazePos = gazePos[0][0][1]
         # Check if current gaze position is within the range considered to be on the fixation cross
-        gazeOnTarget = False
-        if xGazePos > left and xGazePos < right and yGazePos > top and yGazePos < bottom:
-            gazeOnTarget = True
+        gazeOnTarget = _compareGazeAndTarget(mainWindow, left, right, top, bottom)
+        if gazeOnTarget:
             fixationStartTime = datetime.datetime.now()
             # For the target fixation duration, check if they continue to look at the target
-            while (datetime.datetime.now() - fixationStartTime).seconds < TIME_REQUIRED_FOR_FIXATION and gazeOnTarget:
-                if not (xGazePos > left and xGazePos < right and yGazePos > top and yGazePos < bottom):
-                    gazeOnTarget = False
+            # (While still checking that the overall drift check time allotment isn't up!)
+            while (datetime.datetime.now() - fixationStartTime).seconds < TIME_REQUIRED_FOR_FIXATION and gazeOnTarget and (datetime.datetime.now() - driftCheckStartTime).seconds < TIME_BEFORE_RECALIBRATING:
+                gazeOnTarget = _compareGazeAndTarget(mainWindow, left, right, top, bottom)
 
         # If the var is True at this point, then it must have remained True for long enough to consider that a satisfactory fixation!
         if gazeOnTarget:
             driftCheckPassed = True
 
     tracker.stop_drift_check()
+
+    # Deal with a failed drift check by prompting re-calibration (do we want a screen in-between?)
+    if not driftCheckPassed:
+        calibrateRecorder(mainWindow, mouse)
     return driftCheckPassed
+
+# Private method to help with gaze calculations
+def _compareGazeAndTarget(mainWindow, targetLeft, targetRight, targetTop, targetBottom):
+    onTarget = False
+
+    gazePos = tracker.get_gaze_data(mainWindow)
+    xGazePosLeft = gazePos[0][0][0]
+    yGazePosLeft = gazePos[0][0][1]
+    xGazePosRight = gazePos[1][0][0]
+    yGazePosRight = gazePos[1][0][1]
+
+    if ((xGazePosLeft > targetLeft and xGazePosLeft < targetRight and yGazePosLeft > targetTop and yGazePosLeft < targetBottom) and
+       (xGazePosRight > targetLeft and xGazePosRight < targetRight and yGazePosRight > targetTop and yGazePosRight < targetBottom)):
+        onTarget = True
+
+    return onTarget
 
 # We need to tell TPL when we're doing with the relevant image
 def finishDisplayingStimulus(startTime, mediaItem, ttl, recording):
@@ -82,7 +98,7 @@ def setUpRecorder(mainWindow, mouse, participantName):
     proLabConnection = TalkToProLab(project_name = None, dummy_mode = False)
     participantID = (proLabConnection.add_participant(participantName))['participant_id']
 
-    calibrateRecorder(tracker, mainWindow, mouse)
+    calibrateRecorder(mainWindow, mouse)
 
     return proLabConnection
 

@@ -96,7 +96,7 @@ def displayBufferScreen(recorder, recording, mediaInfo, mainWindow, mouse, buffe
         inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, prevMouseLocation)
 
 # Displays a fixation cross on the screen for 1500ms 
-def displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow):
+def displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow, mouse):
     if EYETRACKING_ON:
         switchDisplays('fixation_cross', recorder, recording, mediaInfo)
     fixationScreen = visual.TextStim(
@@ -110,12 +110,12 @@ def displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow):
     mainWindow.flip()
     # Don't proceed until drift check is complete
     # All measurements in pixels
-    fixationZoneSize = 100
-    leftFixationBoundary = WINDOW_WIDTH / 2 - fixationZoneSize / 2
-    rightFixationBoundary = WINDOW_WIDTH / 2 + fixationZoneSize / 2
-    topFixationBoundary = WINDOW_HEIGHT / 2 - fixationZoneSize / 2
-    bottomFixationBoundary = WINDOW_HEIGHT / 2 + fixationZoneSize / 2
-    if driftCheck(mainWindow, leftFixationBoundary, rightFixationBoundary, topFixationBoundary, bottomFixationBoundary):
+    fixationZoneSize = 40 # Tolerance along each axis
+    leftFixationBoundary = WINDOW_WIDTH / 2 - fixationZoneSize
+    rightFixationBoundary = WINDOW_WIDTH / 2 + fixationZoneSize
+    topFixationBoundary = WINDOW_HEIGHT / 2 - fixationZoneSize
+    bottomFixationBoundary = WINDOW_HEIGHT / 2 + fixationZoneSize
+    if driftCheck(mainWindow, mouse, leftFixationBoundary, rightFixationBoundary, topFixationBoundary, bottomFixationBoundary):
         print("Drift check passed.")
     else:
         print("DRIFT CHECK FAILED!")
