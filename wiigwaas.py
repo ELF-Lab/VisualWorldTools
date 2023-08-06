@@ -4,7 +4,7 @@ from psychopy import core, event, monitors, sound, visual
 from randomizer import latinSquare
 from config import *
 from display_resources import checkForInputOnImages, clearClicksAndEvents, displayBlankScreen, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen,getImages, handleStimuliClick, displayStimuli, listenForQuit, listenForRepeat, playSound, setImagePositions
-from eye_tracking_resources import addAOI, addImageToRecorder, closeRecorder, setUpRecorder, startRecordingGaze, stopRecordingGaze
+from eye_tracking_resources import addAOI, addImageToRecorder, calibrateRecorder, closeRecorder, driftCheck, setUpRecorder, startRecordingGaze, stopRecordingGaze
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 # These two are taken from read_me_TalkToProLab.py
@@ -115,6 +115,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     CHECKMARK_SIZE = 100
     WAIT_TIME_BETWEEN_TRIALS = .75 # in seconds
     WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI = .1
+    WAIT_TIME_BEFORE_RECALIBRATING = 3
     WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO = 4
     BUFFER_TEXT = 'Tanganan wii-majitaayan\n mezhinaatebiniwemagak.'
     
@@ -136,8 +137,12 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
     # Display screen between trials so participant can indicate when ready
     displayBufferScreen(recorder, recording, mediaInfo, mainWindow, mouse, BUFFER_TEXT, quitExperiment)
 
-    # Display point in the center of screen for 1500ms
+    # Drift check sequence
     displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow, mouse)
+    if not driftCheck(mainWindow):
+        displayTextScreen(recorder, recording, mediaInfo, mainWindow, "Re-calibration needed. Entering calibration...", "buffer")
+        core.wait(WAIT_TIME_BEFORE_RECALIBRATING)
+        calibrateRecorder(mainWindow, mouse)
     
     # Pause between displaying the fixation cross and displaying the stimuli
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)

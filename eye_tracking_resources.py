@@ -2,9 +2,17 @@ from psychopy.iohub import launchHubServer
 from Titta.titta import Titta
 from Titta.titta.TalkToProLab import TalkToProLab
 import datetime
+from config import WINDOW_HEIGHT, WINDOW_WIDTH
 
 participantID = None
 tracker = None
+
+# All measurements in pixels
+FIXATION_ZONE_SIZE = 40 # How far from the centre the gaze can be, either direction along both axes
+LEFT_FIXATION_BOUNDARY = WINDOW_WIDTH / 2 - FIXATION_ZONE_SIZE
+RIGHT_FIXATION_BOUNDARY = WINDOW_WIDTH / 2 + FIXATION_ZONE_SIZE
+TOP_FIXATION_BOUNDARY = WINDOW_HEIGHT / 2 - FIXATION_ZONE_SIZE
+BOTTOM_FIXATION_BOUNDARY = WINDOW_HEIGHT / 2 + FIXATION_ZONE_SIZE
 
 def addAOI(ttl, image_id, aoi_name, aoi_color, vertices):
     tag_name = 'test_tag'
@@ -30,7 +38,7 @@ def closeRecorder(ttl):
     ttl.endConnectionThread()
     ttl.disconnect()
 
-def driftCheck(mainWindow, mouse, left, right, top, bottom):
+def driftCheck(mainWindow):
     TIME_BEFORE_RECALIBRATING = 10 # seconds
     TIME_REQUIRED_FOR_FIXATION = 0.8
 
@@ -40,13 +48,13 @@ def driftCheck(mainWindow, mouse, left, right, top, bottom):
     # For a given period, wait to see if they are looking at the fixation cross
     while (datetime.datetime.now() - driftCheckStartTime).seconds < TIME_BEFORE_RECALIBRATING and not driftCheckPassed:
         # Check if current gaze position is within the range considered to be on the fixation cross
-        gazeOnTarget = _compareGazeAndTarget(mainWindow, left, right, top, bottom)
+        gazeOnTarget = _compareGazeAndTarget(mainWindow)
         if gazeOnTarget:
             fixationStartTime = datetime.datetime.now()
             # For the target fixation duration, check if they continue to look at the target
             # (While still checking that the overall drift check time allotment isn't up!)
             while (datetime.datetime.now() - fixationStartTime).seconds < TIME_REQUIRED_FOR_FIXATION and gazeOnTarget and (datetime.datetime.now() - driftCheckStartTime).seconds < TIME_BEFORE_RECALIBRATING:
-                gazeOnTarget = _compareGazeAndTarget(mainWindow, left, right, top, bottom)
+                gazeOnTarget = _compareGazeAndTarget(mainWindow)
 
         # If the var is True at this point, then it must have remained True for long enough to consider that a satisfactory fixation!
         if gazeOnTarget:
@@ -54,13 +62,10 @@ def driftCheck(mainWindow, mouse, left, right, top, bottom):
 
     tracker.stop_drift_check()
 
-    # Deal with a failed drift check by prompting re-calibration (do we want a screen in-between?)
-    if not driftCheckPassed:
-        calibrateRecorder(mainWindow, mouse)
     return driftCheckPassed
 
 # Private method to help with gaze calculations
-def _compareGazeAndTarget(mainWindow, targetLeft, targetRight, targetTop, targetBottom):
+def _compareGazeAndTarget(mainWindow):
     onTarget = False
 
     gazePos = tracker.get_gaze_data(mainWindow)
@@ -69,8 +74,8 @@ def _compareGazeAndTarget(mainWindow, targetLeft, targetRight, targetTop, target
     xGazePosRight = gazePos[1][0][0]
     yGazePosRight = gazePos[1][0][1]
 
-    if ((xGazePosLeft > targetLeft and xGazePosLeft < targetRight and yGazePosLeft > targetTop and yGazePosLeft < targetBottom) and
-       (xGazePosRight > targetLeft and xGazePosRight < targetRight and yGazePosRight > targetTop and yGazePosRight < targetBottom)):
+    if ((xGazePosLeft > LEFT_FIXATION_BOUNDARY and xGazePosLeft < RIGHT_FIXATION_BOUNDARY and yGazePosLeft > TOP_FIXATION_BOUNDARY and yGazePosLeft < BOTTOM_FIXATION_BOUNDARY) and
+       (xGazePosRight > LEFT_FIXATION_BOUNDARY and xGazePosRight < RIGHT_FIXATION_BOUNDARY and yGazePosRight > TOP_FIXATION_BOUNDARY and yGazePosRight < BOTTOM_FIXATION_BOUNDARY)):
         onTarget = True
 
     return onTarget
