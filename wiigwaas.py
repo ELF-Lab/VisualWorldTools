@@ -134,14 +134,14 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     displayBufferScreen(recorder, mediaInfo, mainWindow, mouse, BUFFER_TEXT, quitExperiment)
 
     # Drift check sequence
-    displayFixationCrossScreen(recorder, mediaInfo, mainWindow, mouse)
-    if not driftCheck(mainWindow):
-        displayTextScreen(recorder, mediaInfo, mainWindow, "Re-calibration needed. Entering calibration...", "buffer")
-        core.wait(WAIT_TIME_BEFORE_RECALIBRATING)
-        calibrateRecorder(mainWindow, mouse, recorder)
-    
-    # Pause between displaying the fixation cross and displaying the stimuli
-    core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
+    if EYETRACKING_ON:
+        displayFixationCrossScreen(recorder, mediaInfo, mainWindow, mouse)
+        if not driftCheck(mainWindow):
+            displayTextScreen(recorder, mediaInfo, mainWindow, "Re-calibration needed. Entering calibration...", "buffer")
+            core.wait(WAIT_TIME_BEFORE_RECALIBRATING)
+            calibrateRecorder(mainWindow, mouse, recorder)
+        # Pause between displaying the fixation cross and displaying the stimuli
+        core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
     # Display the images, and then pause before the audio is played
     displayStimuli(recorder, mediaInfo, images + [repeatIcon], mainWindow)
