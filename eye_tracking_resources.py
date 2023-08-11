@@ -5,6 +5,7 @@ import datetime
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
 
 participantID = None
+recordingID = None
 tracker = None
 
 # All measurements in pixels
@@ -14,16 +15,16 @@ RIGHT_FIXATION_BOUNDARY = WINDOW_WIDTH / 2 + FIXATION_ZONE_SIZE
 TOP_FIXATION_BOUNDARY = WINDOW_HEIGHT / 2 - FIXATION_ZONE_SIZE
 BOTTOM_FIXATION_BOUNDARY = WINDOW_HEIGHT / 2 + FIXATION_ZONE_SIZE
 
-def addAOI(ttl, image_id, aoi_name, aoi_color, vertices):
+def addAOI(proLabConnection, image_id, aoi_name, aoi_color, vertices):
     tag_name = 'test_tag'
     group_name = 'test_group'
 
-    ttl.add_aois_to_image(image_id, aoi_name, aoi_color, vertices, tag_name = tag_name, group_name = group_name)
+    proLabConnection.add_aois_to_image(image_id, aoi_name, aoi_color, vertices, tag_name = tag_name, group_name = group_name)
 
 # Tell TPL what image we're using during a gaze recording
-def addImageToRecorder(ttl, media_info, imagePath, imageName):
+def addImageToRecorder(proLabConnection, media_info, imagePath, imageName):
     media_type = "image"
-    media_info.update({imageName: ttl.upload_media(imagePath, media_type)})
+    media_info.update({imageName: proLabConnection.upload_media(imagePath, media_type)})
 
     return media_info
 
@@ -32,11 +33,11 @@ def calibrateRecorder(mainWindow, mouse):
     # For some reason, this calibration leaves the mouse invisible. So make it visible again before returning.
     mouse.setVisible(1)
 
-def closeRecorder(ttl):
+def closeRecorder(proLabConnection):
     # We need to explicitly end the thread that was maintaining the connection
     # Titta is set up to do this in their finalize_recording method, but in this case we are not recording anything yet
-    ttl.endConnectionThread()
-    ttl.disconnect()
+    proLabConnection.endConnectionThread()
+    proLabConnection.disconnect()
 
 def driftCheck(mainWindow):
     TIME_BEFORE_RECALIBRATING = 10 # seconds
@@ -81,9 +82,9 @@ def _compareGazeAndTarget(mainWindow):
     return onTarget
 
 # We need to tell TPL when we're doing with the relevant image
-def finishDisplayingStimulus(startTime, mediaItem, ttl, recording):
-    endTime = int((ttl.get_time_stamp())['timestamp'])
-    ttl.send_stimulus_event(recording['recording_id'], start_timestamp = str(startTime), media_id = mediaItem['media_id'], end_timestamp = endTime)
+def finishDisplayingStimulus(startTime, mediaItem, proLabConnection):
+    endTime = int((proLabConnection.get_time_stamp())['timestamp'])
+    proLabConnection.send_stimulus_event(recordingID, start_timestamp = str(startTime), media_id = mediaItem['media_id'], end_timestamp = endTime)
     return endTime
 
 # Note that participantName should be a string
@@ -108,25 +109,25 @@ def setUpRecorder(mainWindow, mouse, participantName):
     return proLabConnection
 
 def startRecordingGaze(proLabConnection):
+    global recordingID
     # Check that Lab is ready to start a recording
     state = proLabConnection.get_state()
     assert state['state'] == 'ready', state['state']
 
     ## Start recording (Note: you have to click on the Record Tab first!)
     recording = proLabConnection.start_recording("image_viewing", participantID, screen_width=1920, screen_height=1080)
+    recordingID = recording["recording_id"]
 
-    return recording
-
-def stopRecordingGaze(proLabConnection, recording):
+def stopRecordingGaze(proLabConnection):
     proLabConnection.stop_recording()
-    proLabConnection.finalize_recording(recording['recording_id'])
+    proLabConnection.finalize_recording(recordingID)
 
 # **************
 # This function is not being used currently - it is for eye-tracking with Tobii directly, rather than via Tobii Pro Lab.
 def setUpEyeTracker(mainWindow):
     iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}
     io = launchHubServer(window = mainWindow, **iohub_config)
-    tracker = io.getDevice('tracker')
+    eyeTracker = io.getDevice('tracker')
 
-    return tracker
+    return eyeTracker
 # **************

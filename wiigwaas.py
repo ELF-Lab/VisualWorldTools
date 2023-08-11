@@ -24,7 +24,6 @@ def main():
     global mouse
     global outputFile
     global recorder
-    global recording
 
     # Begin with the dialog for inputting subject ID
     subjID = displaySubjIDDialog()
@@ -42,19 +41,18 @@ def main():
     clearClicksAndEvents(mouse)
     
     # Setting up the gaze recorder takes a few seconds, so let's begin displaying a loading screen here!
-    displayTextScreen(None, None, None, mainWindow, "Setting up...", None)
+    displayTextScreen(None, None, mainWindow, "Setting up...", None)
     if EYETRACKING_ON:
         recorder = setUpRecorder(mainWindow, mouse, str(subjID))
         mediaInfo = addImagesToRecorder()
-        recording = startRecordingGaze(recorder)
+        startRecordingGaze(recorder)
     else:
         recorder = None
         mediaInfo = None
-        recording = None
 
     # *** BEGIN EXPERIMENT ***
     # Display welcome screen until the user clicks
-    displayBufferScreen(recorder, mediaInfo, recording, mainWindow, mouse, 'Boozhoo! Biindigen.', quitExperiment)
+    displayBufferScreen(recorder, mediaInfo, mainWindow, mouse, 'Boozhoo! Biindigen.', quitExperiment)
 
     # Run trials!
     for trialNum, itemInfo in enumerate(experimentalItems):
@@ -129,16 +127,16 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
 
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
-    displayBlankScreen(recorder, recording, mediaInfo, mainWindow)
+    displayBlankScreen(recorder, mediaInfo, mainWindow)
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
     # Display screen between trials so participant can indicate when ready
-    displayBufferScreen(recorder, recording, mediaInfo, mainWindow, mouse, BUFFER_TEXT, quitExperiment)
+    displayBufferScreen(recorder, mediaInfo, mainWindow, mouse, BUFFER_TEXT, quitExperiment)
 
     # Drift check sequence
-    displayFixationCrossScreen(recorder, recording, mediaInfo, mainWindow, mouse)
+    displayFixationCrossScreen(recorder, mediaInfo, mainWindow, mouse)
     if not driftCheck(mainWindow):
-        displayTextScreen(recorder, recording, mediaInfo, mainWindow, "Re-calibration needed. Entering calibration...", "buffer")
+        displayTextScreen(recorder, mediaInfo, mainWindow, "Re-calibration needed. Entering calibration...", "buffer")
         core.wait(WAIT_TIME_BEFORE_RECALIBRATING)
         calibrateRecorder(mainWindow, mouse)
     
@@ -146,7 +144,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
     # Display the images, and then pause before the audio is played
-    displayStimuli(recorder, recording, mediaInfo, images + [repeatIcon], mainWindow)
+    displayStimuli(recorder, mediaInfo, images + [repeatIcon], mainWindow)
     # core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
     # Prepare for clicks, play the audio file, and start the timer - the user may interact starting now!
@@ -165,7 +163,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
         imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation)
 
     # Now, we've received a first click on one of the images
-    check = handleStimuliClick(imageClicked,images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, recording, mediaInfo, mainWindow)
+    check = handleStimuliClick(imageClicked,images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, mediaInfo, mainWindow)
 
     # Now we wait in this loop until the checkmark is ultimately clicked
     checkmarkClicked = False
@@ -178,7 +176,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
         # Always listening for a click on an image
         imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation)
         if imageClicked:
-            check = handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, recording, mediaInfo, mainWindow)
+            check = handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, mediaInfo, mainWindow)
 
         # Always listening for a click on the checkmark
         checkmarkClicked, prevMouseLocation = checkForInputOnImages(mouse, [check], prevMouseLocation)
@@ -234,11 +232,11 @@ def addImagesToRecorder():
 
 # This is used inside both main and trial (as the user may quit during a trial)
 def quitExperiment():
-    displayTextScreen(recorder, recording, mediaInfo, mainWindow, "Quitting...", None)
+    displayTextScreen(recorder, mediaInfo, mainWindow, "Quitting...", None)
     
     # Quit gracefully
     if EYETRACKING_ON:
-        stopRecordingGaze(recorder, recording)
+        stopRecordingGaze(recorder)
         closeRecorder(recorder)
     outputFile.close()
     core.quit()
