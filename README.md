@@ -17,7 +17,7 @@ It's the control centre from which each trial is structured, but it doesn't cont
 
 ### Running the Experiment
 
-Open up `wiigwaas.py` in the Coder window of PsychoPy.  Hit the play button to run it.  If you're including the eye-tracking component (you can turn this off [here](#config.py)), you'll need to use Tobii Pro Lab for recording.
+Open up `wiigwaas.py` in the Coder window of PsychoPy.  Hit the play button to run it.  If you're including the eye-tracking component (you can turn this off [here](#configpy)), you'll need to use Tobii Pro Lab for recording.
 
 #### Setting Up Tobii Pro Lab
 As noted in the Titta docs, if you want to record in Tobii Pro Lab, there are a few steps involved to get the software ready.
