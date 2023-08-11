@@ -56,7 +56,6 @@ def main():
     # Display welcome screen until the user clicks
     displayBufferScreen(recorder, mediaInfo, recording, mainWindow, mouse, 'Boozhoo! Biindigen.', quitExperiment)
 
-    firstTime = EYETRACKING_ON
     # Run trials!
     for trialNum, itemInfo in enumerate(experimentalItems):
         print(trialNum, itemInfo)
@@ -69,8 +68,7 @@ def main():
         audioFileName = itemInfo[7]
         print(imageFileNames)
         
-        response = trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime)
-        firstTime = False
+        response = trial(imageFileNames, audioFileName, mainWindow, mouse)
                 
         #Record the data from the last trial
         outputFile.write(str(subjID)+"\t"+str(trialNum)+"\t"+str(itemInfo[1])+"\t"+str(itemInfo[2])+"\t"+str(response)+"\n")
@@ -109,7 +107,7 @@ def getExperimentalItems(subjID):
 # - If such a click is received, also display the checkmark/box
 # - If a click is then received in a different image, move the checkmark/box
 # - If a click is then received in the checkmark, end the trial
-def trial(imageFileNames, audioFileName, mainWindow, mouse, firstTime):
+def trial(imageFileNames, audioFileName, mainWindow, mouse):
     global currentDisplay
     global currentDisplayStartTime
     CHECKMARK_SIZE = 100
