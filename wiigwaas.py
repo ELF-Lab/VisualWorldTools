@@ -138,7 +138,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     if not driftCheck(mainWindow):
         displayTextScreen(recorder, mediaInfo, mainWindow, "Re-calibration needed. Entering calibration...", "buffer")
         core.wait(WAIT_TIME_BEFORE_RECALIBRATING)
-        calibrateRecorder(mainWindow, mouse)
+        calibrateRecorder(mainWindow, mouse, recorder)
     
     # Pause between displaying the fixation cross and displaying the stimuli
     core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
@@ -152,14 +152,14 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     clicks = []
     imageClicked = None
     prevMouseLocation = mouse.getPos()
-    playSound(audio)
+    playSound(audio, recorder)
     trialClock.reset()
 
     # We wait in this loop until we have a first click on one of the 3 images
     while not imageClicked:
         # Always be listening for a command to quit the program, or repeat the audio          
         listenForQuit(quitExperiment)
-        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse)
+        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, recorder)
         imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation)
 
     # Now, we've received a first click on one of the images
@@ -171,7 +171,7 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
         
         # Always be listening for a command to quit the program, or repeat the audio  
         listenForQuit(quitExperiment)
-        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse)
+        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, recorder)
         
         # Always listening for a click on an image
         imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation)

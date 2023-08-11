@@ -3,7 +3,7 @@ from pathlib import *
 from psychopy import core, event, gui, visual
 from config import *
 # Ideally we should minimze imports from here, but there is some overlap between what's on screen and what TPL needs to know.
-from eye_tracking_resources import finishDisplayingStimulus
+from eye_tracking_resources import finishDisplayingStimulus, recordEvent
 
 # These need to be updated throughout the experiment, to send messages about what is being shown on screen
 currentDisplay = None
@@ -209,10 +209,12 @@ def listenForQuit(quitFunction):
     if quitKey in keys:
         quitFunction()
 
-def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse):
+def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, recorder):
     repeatClicked, prevMouseLocation = checkForInputOnImages(mouse, [repeatIcon], prevMouseLocation)
     if repeatClicked:
-        playSound(audio)
+        if EYETRACKING_ON:
+            recordEvent(recorder, "RepeatPressed")
+        playSound(audio, recorder)
         pic = "replay"
         trialDur = trialClock.getTime()
         response = [pic, trialDur]
@@ -220,7 +222,9 @@ def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mo
 
     return prevMouseLocation
 
-def playSound(audio):
+def playSound(audio, recorder):
+    if EYETRACKING_ON:
+        recordEvent(recorder, "AudioStart")
     audio.play()
 
     # Note that setPos defines the position of the image's /centre/, and screen positions are determined based on the /centre/ of the screen being (0,0)

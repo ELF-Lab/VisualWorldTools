@@ -28,7 +28,8 @@ def addImageToRecorder(proLabConnection, media_info, imagePath, imageName):
 
     return media_info
 
-def calibrateRecorder(mainWindow, mouse):
+def calibrateRecorder(mainWindow, mouse, proLabConnection):
+    recordEvent(proLabConnection, "CalibrationStart")
     tracker.calibrate(mainWindow)
     # For some reason, this calibration leaves the mouse invisible. So make it visible again before returning.
     mouse.setVisible(1)
@@ -87,6 +88,10 @@ def finishDisplayingStimulus(startTime, mediaItem, proLabConnection):
     proLabConnection.send_stimulus_event(recordingID, start_timestamp = str(startTime), media_id = mediaItem['media_id'], end_timestamp = endTime)
     return endTime
 
+def recordEvent(proLabConnection, eventDesc):
+    if proLabConnection and recordingID: # Only if we've actually started recording etc.
+        proLabConnection.send_custom_event(recordingID, eventDesc)
+
 # Note that participantName should be a string
 def setUpRecorder(mainWindow, mouse, participantName):
     global participantID
@@ -104,7 +109,7 @@ def setUpRecorder(mainWindow, mouse, participantName):
     proLabConnection = TalkToProLab(project_name = None, dummy_mode = False)
     participantID = (proLabConnection.add_participant(participantName))['participant_id']
 
-    calibrateRecorder(mainWindow, mouse)
+    calibrateRecorder(mainWindow, mouse, proLabConnection)
 
     return proLabConnection
 
