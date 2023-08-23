@@ -9,9 +9,20 @@ from eye_tracking_resources import finishDisplayingStimulus, recordEvent
 currentDisplay = None
 currentDisplayStartTime = None
 
+# A helper method that calls another method specific to the set input type
+def checkForInputOnImages(mouse, images, prevMouseLocation):
+    if USER_INPUT_DEVICE == 'mouse':
+        clickedImage, prevMouseLocation = _checkForClickOnImages(mouse, images, prevMouseLocation)
+    elif USER_INPUT_DEVICE == 'touch':
+        clickedImage, prevMouseLocation = _checkForTapOnImages(mouse, images, prevMouseLocation)
+    else:
+        print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
+        core.quit()
+    return clickedImage, prevMouseLocation
+
 # Given a list of images, returns the one that is being clicked (or None)
 # Hold for the duration of the click - so that when this function ends, the click is over
-def checkForClickOnImages(mouse, images, prevMouseLocation):
+def _checkForClickOnImages(mouse, images, prevMouseLocation):
     clickedImage = None
     for image in images:
         if mouse.isPressedIn(image):
@@ -22,20 +33,10 @@ def checkForClickOnImages(mouse, images, prevMouseLocation):
             prevMouseLocation = mouse.getPos()
     return clickedImage, prevMouseLocation
 
-def checkForInputOnImages(mouse, images, prevMouseLocation):
-    if USER_INPUT_DEVICE == 'mouse':
-        clickedImage, prevMouseLocation = checkForClickOnImages(mouse, images, prevMouseLocation)
-    elif USER_INPUT_DEVICE == 'touch':
-        clickedImage, prevMouseLocation = checkForTapOnImages(mouse, images, prevMouseLocation)
-    else:
-        print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
-        core.quit()
-    return clickedImage, prevMouseLocation
-
 # Checks for a single tap on an image
 # Does this by asking: has the "mouse" moved? (= yes if a tap was received)
 # And: If so, is the "mouse" within the image?
-def checkForTapOnImages(mouse, images, prevMouseLocation):
+def _checkForTapOnImages(mouse, images, prevMouseLocation):
     clickedImage = None
     mouse_location = mouse.getPos()
     # If the mouse moved... (check x and y coords)
@@ -47,7 +48,18 @@ def checkForTapOnImages(mouse, images, prevMouseLocation):
                 prevMouseLocation = mouse_location # Update for the next check
     return clickedImage, prevMouseLocation
 
-def checkForClickAnywhere(mouse, prevMouseLocation):
+# A helper method that calls another method specific to the set input type
+def checkForInputAnywhere(mouse, prevMouseLocation):
+    if USER_INPUT_DEVICE == 'mouse':
+        inputReceived, prevMouseLocation = _checkForClickAnywhere(mouse, prevMouseLocation)
+    elif USER_INPUT_DEVICE == 'touch':
+        inputReceived, prevMouseLocation = _checkForTapAnywhere(mouse, prevMouseLocation)
+    else:
+        print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
+        core.quit()
+    return inputReceived, prevMouseLocation
+
+def _checkForClickAnywhere(mouse, prevMouseLocation):
     clicked = False
     if any(mouse.getPressed()):
         clicked = True
@@ -57,17 +69,7 @@ def checkForClickAnywhere(mouse, prevMouseLocation):
     
     return clicked, prevMouseLocation
 
-def checkForInputAnywhere(mouse, prevMouseLocation):
-    if USER_INPUT_DEVICE == 'mouse':
-        inputReceived, prevMouseLocation = checkForClickAnywhere(mouse, prevMouseLocation)
-    elif USER_INPUT_DEVICE == 'touch':
-        inputReceived, prevMouseLocation = checkForTapAnywhere(mouse, prevMouseLocation)
-    else:
-        print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
-        core.quit()
-    return inputReceived, prevMouseLocation
-
-def checkForTapAnywhere(mouse, prevMouseLocation):
+def _checkForTapAnywhere(mouse, prevMouseLocation):
     tapped = False
     mouse_location = mouse.getPos()
     # If the mouse moved... (check x and y coords)
