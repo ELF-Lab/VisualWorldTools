@@ -1,10 +1,10 @@
 from random import randint
 from pathlib import *
 from psychopy import core, event, monitors, sound, visual
-from randomizer import latinSquare
+from randomizer import latin_square
 from config import *
-from display_resources import checkForInputOnImages, clearClicksAndEvents, displayBlankScreen, displayBufferScreen, displayFixationCrossScreen, displaySubjIDDialog, displayTextScreen,getImages, handleStimuliClick, displayStimuli, listenForQuit, listenForRepeat, playSound, setImagePositions
-from eye_tracking_resources import addAOI, addImageToRecorder, calibrateRecorder, closeRecorder, driftCheck, setUpRecorder, startRecordingGaze, stopRecordingGaze
+from display_resources import check_for_input_on_images, clear_clicks_and_events, display_blank_screen, display_buffer_screen, display_fixation_cross_screen, display_subj_ID_dialog, display_text_screen,get_images, handle_stimuli_click, display_stimuli, listen_for_quit, listen_for_repeat, play_sound, set_image_positions
+from eye_tracking_resources import add_AOI, add_image_to_recorder, calibrate_recorder, close_recorder, drift_check, set_up_recorder, start_recording_gaze, stop_recording_gaze
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
 # These two are taken from read_me_TalkToProLab.py
@@ -19,14 +19,14 @@ SUPPORTED_IMAGE_NUMBERS = [1, 2, 3, 4] # Different numbers of images = different
 
 def main():
     # Global vars (to be accessible by all functions)
-    global mainWindow
-    global mediaInfo
+    global main_window
+    global media_info
     global mouse
-    global outputFile
+    global output_file
     global recorder
 
     # Begin with the dialog for inputting subject ID
-    subjID = displaySubjIDDialog()
+    subjID = display_subj_ID_dialog()
 
     # *** SET-UP ***
     # Define objects for the main screen, mouse, output file and list of experimental items. Plus, start with a blank slate for clicks and events.
@@ -34,66 +34,66 @@ def main():
     monitor.setWidth(SCREEN_WIDTH)
     monitor.setDistance(VIEWING_DIST)
     monitor.setSizePix([WINDOW_WIDTH, WINDOW_HEIGHT])
-    mainWindow = visual.Window([WINDOW_WIDTH, WINDOW_HEIGHT], fullscr = True, allowGUI = True, monitor = monitor, units = 'pix', color = "white")
-    mouse = event.Mouse(visible = True, win = mainWindow)
-    outputFile = createOutputFile(subjID)
-    experimentalItems = getExperimentalItems(subjID)
-    clearClicksAndEvents(mouse)
+    main_window = visual.Window([WINDOW_WIDTH, WINDOW_HEIGHT], fullscr = True, allowGUI = True, monitor = monitor, units = 'pix', color = "white")
+    mouse = event.Mouse(visible = True, win = main_window)
+    output_file = create_output_file(subjID)
+    experimental_items = get_experimental_items(subjID)
+    clear_clicks_and_events(mouse)
     
     # Setting up the gaze recorder takes a few seconds, so let's begin displaying a loading screen here!
-    displayTextScreen(None, None, mainWindow, "Setting up...", None)
+    display_text_screen(None, None, main_window, "Setting up...", None)
     if EYETRACKING_ON:
-        recorder = setUpRecorder(mainWindow, mouse, str(subjID))
-        mediaInfo = addImagesToRecorder()
-        startRecordingGaze(recorder)
+        recorder = set_up_recorder(main_window, mouse, str(subjID))
+        media_info = add_images_to_recorder()
+        start_recording_gaze(recorder)
     else:
         recorder = None
-        mediaInfo = None
+        media_info = None
 
     # *** BEGIN EXPERIMENT ***
     # Display welcome screen until the user clicks
-    displayBufferScreen(recorder, mediaInfo, mainWindow, mouse, 'Boozhoo! Biindigen.', quitExperiment)
+    display_buffer_screen(recorder, media_info, main_window, mouse, 'Boozhoo! Biindigen.', quit_experiment)
 
     # Run trials!
-    for trialNum, itemInfo in enumerate(experimentalItems):
-        print(trialNum, itemInfo)
+    for trial_number, item_info in enumerate(experimental_items):
+        print(trial_number, item_info)
         # By specifying the image file names, you also specify how many images we're using!
-        imageFileNames = [itemInfo[4], itemInfo[5], itemInfo[6]]
+        image_file_names = [item_info[4], item_info[5], item_info[6]]
         # Check that the number of images provided is supported
-        if len(imageFileNames) not in SUPPORTED_IMAGE_NUMBERS:
-            print(f"\nERROR: Unsupported number of images ({len(imageFileNames)}).  Supported numbers are {SUPPORTED_IMAGE_NUMBERS}.\n")
-            quitExperiment()
-        audioFileName = itemInfo[7]
-        print(imageFileNames)
+        if len(image_file_names) not in SUPPORTED_IMAGE_NUMBERS:
+            print(f"\nERROR: Unsupported number of images ({len(image_file_names)}).  Supported numbers are {SUPPORTED_IMAGE_NUMBERS}.\n")
+            quit_experiment()
+        audio_file_name = item_info[7]
+        print(image_file_names)
         
-        response = trial(imageFileNames, audioFileName, mainWindow, mouse)
+        response = trial(image_file_names, audio_file_name, main_window, mouse)
                 
         #Record the data from the last trial
-        outputFile.write(str(subjID)+"\t"+str(trialNum)+"\t"+str(itemInfo[1])+"\t"+str(itemInfo[2])+"\t"+str(response)+"\n")
-        outputFile.flush()
+        output_file.write(str(subjID)+"\t"+str(trial_number)+"\t"+str(item_info[1])+"\t"+str(item_info[2])+"\t"+str(response)+"\n")
+        output_file.flush()
 
-    quitExperiment()
+    quit_experiment()
 
 
 # *** Functions used inside main() ***
 
 # Create output file to save data
-def createOutputFile(subjID):
-    outputFile = open("Wiigwaas-Exp-" + str(subjID) + ".txt", "w") # Open output file channel for editing
-    outputFile.write('subj\ttrial\titem\tcond\tclicks\n') # Add header
-    return outputFile
+def create_output_file(subj_ID):
+    output_file = open("Wiigwaas-Exp-" + str(subj_ID) + ".txt", "w") # Open output file channel for editing
+    output_file.write('subj\ttrial\titem\tcond\tclicks\n') # Add header
+    return output_file
 
-def getExperimentalItems(subjID):
-    EXP_ITEMS_FILE_NAME = 'experimentalItems-small.csv'
+def get_experimental_items(subjID):
+    EXP_ITEMS_FILE_NAME = 'experimental_items-small.csv'
     NUMBER_OF_LISTS = 4
     
     # Calculate current list based on subject number.
-    currentList = subjID % NUMBER_OF_LISTS + ((not subjID % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
+    current_list = subjID % NUMBER_OF_LISTS + ((not subjID % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
 
     # Get experimental items and randomize.
-    experimentalItems = latinSquare(currentList, EXP_ITEMS_FILE_NAME)
-    print(experimentalItems)
-    return experimentalItems
+    experimental_items = latin_square(current_list, EXP_ITEMS_FILE_NAME)
+    print(experimental_items)
+    return experimental_items
 
 # What happens in a trial?
 # - Determine the images to be displayed and the audio to be played
@@ -105,9 +105,7 @@ def getExperimentalItems(subjID):
 # - If such a click is received, also display the checkmark/box
 # - If a click is then received in a different image, move the checkmark/box
 # - If a click is then received in the checkmark, end the trial
-def trial(imageFileNames, audioFileName, mainWindow, mouse):
-    global currentDisplay
-    global currentDisplayStartTime
+def trial(image_file_names, audio_file_name, main_window, mouse):
     CHECKMARK_SIZE = 100
     WAIT_TIME_BETWEEN_TRIALS = .75 # in seconds
     WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI = .1
@@ -115,75 +113,75 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
     WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO = 4
     BUFFER_TEXT = 'Tanganan wii-majitaayan\n mezhinaatebiniwemagak.'
     
-    trialClock = core.Clock()
+    trial_clock = core.Clock()
 
     # Get the audio to be played for the given trial.
-    audio = sound.Sound(Path.cwd()/"audio"/str(audioFileName))
+    audio = sound.Sound(Path.cwd()/"audio"/str(audio_file_name))
 
     # Get the relevant images
-    images, checks, repeatIcon, selectionBox = getImages(imageFileNames, IMAGE_SIZE, CHECKMARK_SIZE, REPEAT_ICON_SIZE, mainWindow)
+    images, checks, repeat_icon, selection_box = get_images(image_file_names, IMAGE_SIZE, CHECKMARK_SIZE, REPEAT_ICON_SIZE, main_window)
     # Determine the position of each image
-    images, checks, repeatIcon = setImagePositions(IMAGE_SIZE, CHECKMARK_SIZE, images, checks, repeatIcon, IMAGE_OFFSET_FROM_EDGE)
+    images, checks, repeat_icon = set_image_positions(IMAGE_SIZE, CHECKMARK_SIZE, images, checks, repeat_icon, IMAGE_OFFSET_FROM_EDGE)
 
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
-    displayBlankScreen(recorder, mediaInfo, mainWindow)
+    display_blank_screen(recorder, media_info, main_window)
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
     
     # Display screen between trials so participant can indicate when ready
-    displayBufferScreen(recorder, mediaInfo, mainWindow, mouse, BUFFER_TEXT, quitExperiment)
+    display_buffer_screen(recorder, media_info, main_window, mouse, BUFFER_TEXT, quit_experiment)
 
     # Drift check sequence
     if EYETRACKING_ON:
-        displayFixationCrossScreen(recorder, mediaInfo, mainWindow, mouse)
-        if not driftCheck(mainWindow):
-            displayTextScreen(recorder, mediaInfo, mainWindow, "Re-calibration needed. Entering calibration...", "buffer")
+        display_fixation_cross_screen(recorder, media_info, main_window, mouse)
+        if not drift_check(main_window):
+            display_text_screen(recorder, media_info, main_window, "Re-calibration needed. Entering calibration...", "buffer")
             core.wait(WAIT_TIME_BEFORE_RECALIBRATING)
-            calibrateRecorder(mainWindow, mouse, recorder)
+            calibrate_recorder(main_window, mouse, recorder)
         # Pause between displaying the fixation cross and displaying the stimuli
         core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
     # Display the images, and then pause before the audio is played
-    displayStimuli(recorder, mediaInfo, images + [repeatIcon], mainWindow)
+    display_stimuli(recorder, media_info, images + [repeat_icon], main_window)
     # core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
     # Prepare for clicks, play the audio file, and start the timer - the user may interact starting now!
-    clearClicksAndEvents(mouse)
+    clear_clicks_and_events(mouse)
     clicks = []
-    imageClicked = None
-    prevMouseLocation = mouse.getPos()
-    playSound(audio, recorder)
-    trialClock.reset()
+    image_clicked = None
+    prev_mouse_location = mouse.getPos()
+    play_sound(audio, recorder)
+    trial_clock.reset()
 
     # We wait in this loop until we have a first click on one of the 3 images
-    while not imageClicked:
+    while not image_clicked:
         # Always be listening for a command to quit the program, or repeat the audio          
-        listenForQuit(quitExperiment)
-        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, recorder)
-        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation)
+        listen_for_quit(quit_experiment)
+        prev_mouse_location = listen_for_repeat(repeat_icon, prev_mouse_location, audio, trial_clock, clicks, mouse, recorder)
+        image_clicked, prev_mouse_location = check_for_input_on_images(mouse, images, prev_mouse_location)
 
     # Now, we've received a first click on one of the images
-    check = handleStimuliClick(imageClicked,images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, mediaInfo, mainWindow)
+    check = handle_stimuli_click(image_clicked,images, checks, selection_box, repeat_icon, trial_clock, clicks, recorder, media_info, main_window)
 
     # Now we wait in this loop until the checkmark is ultimately clicked
-    checkmarkClicked = False
-    while not checkmarkClicked:
+    checkmark_clicked = False
+    while not checkmark_clicked:
         
         # Always be listening for a command to quit the program, or repeat the audio  
-        listenForQuit(quitExperiment)
-        prevMouseLocation = listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, recorder)
+        listen_for_quit(quit_experiment)
+        prev_mouse_location = listen_for_repeat(repeat_icon, prev_mouse_location, audio, trial_clock, clicks, mouse, recorder)
         
         # Always listening for a click on an image
-        imageClicked, prevMouseLocation = checkForInputOnImages(mouse, images, prevMouseLocation)
-        if imageClicked:
-            check = handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, mediaInfo, mainWindow)
+        image_clicked, prev_mouse_location = check_for_input_on_images(mouse, images, prev_mouse_location)
+        if image_clicked:
+            check = handle_stimuli_click(image_clicked, images, checks, selection_box, repeat_icon, trial_clock, clicks, recorder, media_info, main_window)
 
         # Always listening for a click on the checkmark
-        checkmarkClicked, prevMouseLocation = checkForInputOnImages(mouse, [check], prevMouseLocation)
+        checkmark_clicked, prev_mouse_location = check_for_input_on_images(mouse, [check], prev_mouse_location)
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
-    trialDur = trialClock.getTime()
-    response = ["check", trialDur]
+    trial_duration = trial_clock.getTime()
+    response = ["check", trial_duration]
     clicks.append(response)
 
     positions = [image.pos for image in images]
@@ -193,17 +191,17 @@ def trial(imageFileNames, audioFileName, mainWindow, mouse):
 # *** Functions used inside trial() ***
 
 # Give the recorder info about what images are on the screen, so that we can track gazes within those image areas
-def addImagesToRecorder():
+def add_images_to_recorder():
     # Add an overall background image (at present this is really just a placeholder)
     stimuli_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\sample_trial_screen.jpeg"
     fixation_cross_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\fixation_cross.jpeg"
     buffer_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\buffer_screen.jpeg"
     blank_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\blank_screen.jpeg"
     media_info = {}
-    mediaInfo = addImageToRecorder(recorder, media_info, stimuli_image_path, "stimuli")
-    mediaInfo = addImageToRecorder(recorder, media_info, fixation_cross_image_path, "fixation_cross")
-    mediaInfo = addImageToRecorder(recorder, media_info, buffer_image_path, "buffer")
-    mediaInfo = addImageToRecorder(recorder, media_info, blank_image_path, "blank")
+    media_info = add_image_to_recorder(recorder, media_info, stimuli_image_path, "stimuli")
+    media_info = add_image_to_recorder(recorder, media_info, fixation_cross_image_path, "fixation_cross")
+    media_info = add_image_to_recorder(recorder, media_info, buffer_image_path, "buffer")
+    media_info = add_image_to_recorder(recorder, media_info, blank_image_path, "blank")
 
     # Add an AOI (area of interest) for each image
     AOI_SIZE = IMAGE_SIZE + IMAGE_OFFSET_FROM_EDGE
@@ -216,29 +214,29 @@ def addImagesToRecorder():
     aoi_name = 'upper_left'
     aoi_color =  'AA0000'
     vertices = ((LEFT_EDGE, TOP_EDGE), (LEFT_EDGE, AOI_SIZE), (LEFT_EDGE + AOI_SIZE, AOI_SIZE), (LEFT_EDGE + AOI_SIZE, TOP_EDGE))
-    addAOI(recorder, mediaInfo['stimuli']['media_id'], aoi_name, aoi_color, vertices)
+    add_AOI(recorder, media_info['stimuli']['media_id'], aoi_name, aoi_color, vertices)
 
     aoi_name = 'upper_right'
     aoi_color = '00AA00'
     vertices = ((RIGHT_EDGE - AOI_SIZE, TOP_EDGE), (RIGHT_EDGE - AOI_SIZE, TOP_EDGE + AOI_SIZE), (RIGHT_EDGE, TOP_EDGE + AOI_SIZE), (RIGHT_EDGE, TOP_EDGE))
-    addAOI(recorder, mediaInfo['stimuli']['media_id'], aoi_name, aoi_color, vertices)
+    add_AOI(recorder, media_info['stimuli']['media_id'], aoi_name, aoi_color, vertices)
 
     aoi_name = 'lower_middle'
     aoi_color = '0000AA'
     vertices = ((X_MIDPOINT - AOI_SIZE/2,  BOTTOM_EDGE - AOI_SIZE), (X_MIDPOINT - AOI_SIZE/2, BOTTOM_EDGE), (X_MIDPOINT + AOI_SIZE/2, BOTTOM_EDGE), (X_MIDPOINT + AOI_SIZE/2, BOTTOM_EDGE - AOI_SIZE))
-    addAOI(recorder, mediaInfo['stimuli']['media_id'], aoi_name, aoi_color, vertices)
+    add_AOI(recorder, media_info['stimuli']['media_id'], aoi_name, aoi_color, vertices)
 
-    return mediaInfo
+    return media_info
 
 # This is used inside both main and trial (as the user may quit during a trial)
-def quitExperiment():
-    displayTextScreen(recorder, mediaInfo, mainWindow, "Quitting...", None)
+def quit_experiment():
+    display_text_screen(recorder, media_info, main_window, "Quitting...", None)
     
     # Quit gracefully
     if EYETRACKING_ON:
-        stopRecordingGaze(recorder)
-        closeRecorder(recorder)
-    outputFile.close()
+        stop_recording_gaze(recorder)
+        close_recorder(recorder)
+    output_file.close()
     core.quit()
 
 ### Run Experiment ###

@@ -4,8 +4,8 @@ from Titta.titta.TalkToProLab import TalkToProLab
 import datetime
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
 
-participantID = None
-recordingID = None
+participant_ID = None
+recording_ID = None
 tracker = None
 
 # All measurements in pixels
@@ -15,124 +15,124 @@ RIGHT_FIXATION_BOUNDARY = WINDOW_WIDTH / 2 + FIXATION_ZONE_SIZE
 TOP_FIXATION_BOUNDARY = WINDOW_HEIGHT / 2 - FIXATION_ZONE_SIZE
 BOTTOM_FIXATION_BOUNDARY = WINDOW_HEIGHT / 2 + FIXATION_ZONE_SIZE
 
-def addAOI(proLabConnection, image_id, aoi_name, aoi_color, vertices):
+def add_AOI(pro_lab_conection, image_id, aoi_name, aoi_color, vertices):
     tag_name = 'test_tag'
     group_name = 'test_group'
 
-    proLabConnection.add_aois_to_image(image_id, aoi_name, aoi_color, vertices, tag_name = tag_name, group_name = group_name)
+    pro_lab_conection.add_aois_to_image(image_id, aoi_name, aoi_color, vertices, tag_name = tag_name, group_name = group_name)
 
 # Tell TPL what image we're using during a gaze recording
-def addImageToRecorder(proLabConnection, media_info, imagePath, imageName):
+def add_image_to_recorder(pro_lab_conection, media_info, image_path, image_name):
     media_type = "image"
-    media_info.update({imageName: proLabConnection.upload_media(imagePath, media_type)})
+    media_info.update({image_name: pro_lab_conection.upload_media(image_path, media_type)})
 
     return media_info
 
-def calibrateRecorder(mainWindow, mouse, proLabConnection):
-    recordEvent(proLabConnection, "CalibrationStart")
-    tracker.calibrate(mainWindow)
+def calibrate_recorder(main_window, mouse, pro_lab_conection):
+    record_event(pro_lab_conection, "CalibrationStart")
+    tracker.calibrate(main_window)
     # For some reason, this calibration leaves the mouse invisible. So make it visible again before returning.
     mouse.setVisible(1)
 
-def closeRecorder(proLabConnection):
+def close_recorder(pro_lab_conection):
     # We need to explicitly end the thread that was maintaining the connection
     # Titta is set up to do this in their finalize_recording method, but in this case we are not recording anything yet
-    proLabConnection.endConnectionThread()
-    proLabConnection.disconnect()
+    pro_lab_conection.endConnectionThread()
+    pro_lab_conection.disconnect()
 
-def driftCheck(mainWindow):
+def drift_check(main_window):
     TIME_BEFORE_RECALIBRATING = 10 # seconds
     TIME_REQUIRED_FOR_FIXATION = 0.8
 
     tracker.start_drift_check()
-    driftCheckStartTime = datetime.datetime.now()
-    driftCheckPassed = False
+    drift_check_start_time = datetime.datetime.now()
+    drift_check_passed = False
     # For a given period, wait to see if they are looking at the fixation cross
-    while (datetime.datetime.now() - driftCheckStartTime).seconds < TIME_BEFORE_RECALIBRATING and not driftCheckPassed:
+    while (datetime.datetime.now() - drift_check_start_time).seconds < TIME_BEFORE_RECALIBRATING and not drift_check_passed:
         # Check if current gaze position is within the range considered to be on the fixation cross
-        gazeOnTarget = _compareGazeAndTarget(mainWindow)
-        if gazeOnTarget:
-            fixationStartTime = datetime.datetime.now()
+        gaze_on_target = _compare_gaze_and_target(main_window)
+        if gaze_on_target:
+            fixation_start_time = datetime.datetime.now()
             # For the target fixation duration, check if they continue to look at the target
             # (While still checking that the overall drift check time allotment isn't up!)
-            while (datetime.datetime.now() - fixationStartTime).seconds < TIME_REQUIRED_FOR_FIXATION and gazeOnTarget and (datetime.datetime.now() - driftCheckStartTime).seconds < TIME_BEFORE_RECALIBRATING:
-                gazeOnTarget = _compareGazeAndTarget(mainWindow)
+            while (datetime.datetime.now() - fixation_start_time).seconds < TIME_REQUIRED_FOR_FIXATION and gaze_on_target and (datetime.datetime.now() - drift_check_start_time).seconds < TIME_BEFORE_RECALIBRATING:
+                gaze_on_target = _compare_gaze_and_target(main_window)
 
         # If the var is True at this point, then it must have remained True for long enough to consider that a satisfactory fixation!
-        if gazeOnTarget:
-            driftCheckPassed = True
+        if gaze_on_target:
+            drift_check_passed = True
 
     tracker.stop_drift_check()
 
-    return driftCheckPassed
+    return drift_check_passed
 
 # Private method to help with gaze calculations
-def _compareGazeAndTarget(mainWindow):
-    onTarget = False
+def _compare_gaze_and_target(main_window):
+    on_target = False
 
-    gazePos = tracker.get_gaze_data(mainWindow)
-    xGazePosLeft = gazePos[0][0][0]
-    yGazePosLeft = gazePos[0][0][1]
-    xGazePosRight = gazePos[1][0][0]
-    yGazePosRight = gazePos[1][0][1]
+    gazePos = tracker.get_gaze_data(main_window)
+    x_gaze_pos_left = gazePos[0][0][0]
+    y_gaze_pos_left = gazePos[0][0][1]
+    x_gaze_pos_right = gazePos[1][0][0]
+    y_gaze_pos_right = gazePos[1][0][1]
 
-    if ((xGazePosLeft > LEFT_FIXATION_BOUNDARY and xGazePosLeft < RIGHT_FIXATION_BOUNDARY and yGazePosLeft > TOP_FIXATION_BOUNDARY and yGazePosLeft < BOTTOM_FIXATION_BOUNDARY) and
-       (xGazePosRight > LEFT_FIXATION_BOUNDARY and xGazePosRight < RIGHT_FIXATION_BOUNDARY and yGazePosRight > TOP_FIXATION_BOUNDARY and yGazePosRight < BOTTOM_FIXATION_BOUNDARY)):
-        onTarget = True
+    if ((x_gaze_pos_left > LEFT_FIXATION_BOUNDARY and x_gaze_pos_left < RIGHT_FIXATION_BOUNDARY and y_gaze_pos_left > TOP_FIXATION_BOUNDARY and y_gaze_pos_left < BOTTOM_FIXATION_BOUNDARY) and
+       (x_gaze_pos_right > LEFT_FIXATION_BOUNDARY and x_gaze_pos_right < RIGHT_FIXATION_BOUNDARY and y_gaze_pos_right > TOP_FIXATION_BOUNDARY and y_gaze_pos_right < BOTTOM_FIXATION_BOUNDARY)):
+        on_target = True
 
-    return onTarget
+    return on_target
 
 # We need to tell TPL when we're doing with the relevant image
-def finishDisplayingStimulus(startTime, mediaItem, proLabConnection):
-    endTime = int((proLabConnection.get_time_stamp())['timestamp'])
-    proLabConnection.send_stimulus_event(recordingID, start_timestamp = str(startTime), media_id = mediaItem['media_id'], end_timestamp = endTime)
-    return endTime
+def finish_displaying_stimulus(start_time, media_item, pro_lab_conection):
+    end_time = int((pro_lab_conection.get_time_stamp())['timestamp'])
+    pro_lab_conection.send_stimulus_event(recording_ID, start_timestamp = str(start_time), media_id = media_item['media_id'], end_timestamp = end_time)
+    return end_time
 
-def recordEvent(proLabConnection, eventDesc):
-    if proLabConnection and recordingID: # Only if we've actually started recording etc.
-        proLabConnection.send_custom_event(recordingID, eventDesc)
+def record_event(pro_lab_conection, event_description):
+    if pro_lab_conection and recording_ID: # Only if we've actually started recording etc.
+        pro_lab_conection.send_custom_event(recording_ID, event_description)
 
-# Note that participantName should be a string
-def setUpRecorder(mainWindow, mouse, participantName):
-    global participantID
+# Note that participant_name should be a string
+def set_up_recorder(main_window, mouse, participant_name):
+    global participant_ID
     global tracker
 
     # Specify the kind of eyetracker we are using, and an identifier for the participant
     settings = Titta.get_defaults("Tobii Pro Fusion")
-    settings.FILENAME = participantName
+    settings.FILENAME = participant_name
 
     # Create the eyetracker object (doesn't actually interact with the eyetracker itself here, just preparing for TPL)
     tracker = Titta.Connect(settings)
     tracker.init()
 
     # Create the connection with TPL
-    proLabConnection = TalkToProLab(project_name = None, dummy_mode = False)
-    participantID = (proLabConnection.add_participant(participantName))['participant_id']
+    pro_lab_conection = TalkToProLab(project_name = None, dummy_mode = False)
+    participant_ID = (pro_lab_conection.add_participant(participant_name))['participant_id']
 
-    calibrateRecorder(mainWindow, mouse, proLabConnection)
+    calibrate_recorder(main_window, mouse, pro_lab_conection)
 
-    return proLabConnection
+    return pro_lab_conection
 
-def startRecordingGaze(proLabConnection):
-    global recordingID
+def start_recording_gaze(pro_lab_conection):
+    global recording_ID
     # Check that Lab is ready to start a recording
-    state = proLabConnection.get_state()
+    state = pro_lab_conection.get_state()
     assert state['state'] == 'ready', state['state']
 
     ## Start recording (Note: you have to click on the Record Tab first!)
-    recording = proLabConnection.start_recording("image_viewing", participantID, screen_width=1920, screen_height=1080)
-    recordingID = recording["recording_id"]
+    recording = pro_lab_conection.start_recording("image_viewing", participant_ID, screen_width=1920, screen_height=1080)
+    recording_ID = recording["recording_id"]
 
-def stopRecordingGaze(proLabConnection):
-    proLabConnection.stop_recording()
-    proLabConnection.finalize_recording(recordingID)
+def stop_recording_gaze(pro_lab_conection):
+    pro_lab_conection.stop_recording()
+    pro_lab_conection.finalize_recording(recording_ID)
 
 # **************
 # This function is not being used currently - it is for eye-tracking with Tobii directly, rather than via Tobii Pro Lab.
-def setUpEyeTracker(mainWindow):
+def set_up_eye_tracker(main_window):
     iohub_config = {'eyetracker.hw.tobii.EyeTracker': {'name': 'tracker', 'calibration': {'type': 'THREE_POINTS'}}}
-    io = launchHubServer(window = mainWindow, **iohub_config)
-    eyeTracker = io.getDevice('tracker')
+    io = launchHubServer(window = main_window, **iohub_config)
+    eye_tracker = io.getDevice('tracker')
 
-    return eyeTracker
+    return eye_tracker
 # **************

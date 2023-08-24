@@ -3,176 +3,176 @@ from pathlib import *
 from psychopy import core, event, gui, visual
 from config import *
 # Ideally we should minimze imports from here, but there is some overlap between what's on screen and what TPL needs to know.
-from eye_tracking_resources import finishDisplayingStimulus, recordEvent
+from eye_tracking_resources import finish_displaying_stimulus, record_event
 
 # These need to be updated throughout the experiment, to send messages about what is being shown on screen
-currentDisplay = None
-currentDisplayStartTime = None
+current_display = None
+current_display_start_time = None
 
 # A helper method that calls another method specific to the set input type
-def checkForInputOnImages(mouse, images, prevMouseLocation):
+def check_for_input_on_images(mouse, images, prev_mouse_location):
     if USER_INPUT_DEVICE == 'mouse':
-        clickedImage, prevMouseLocation = _checkForClickOnImages(mouse, images, prevMouseLocation)
+        clicked_image, prev_mouse_location = _check_for_click_on_images(mouse, images, prev_mouse_location)
     elif USER_INPUT_DEVICE == 'touch':
-        clickedImage, prevMouseLocation = _checkForTapOnImages(mouse, images, prevMouseLocation)
+        clicked_image, prev_mouse_location = _check_for_tap_on_images(mouse, images, prev_mouse_location)
     else:
         print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
         core.quit()
-    return clickedImage, prevMouseLocation
+    return clicked_image, prev_mouse_location
 
 # Given a list of images, returns the one that is being clicked (or None)
 # Hold for the duration of the click - so that when this function ends, the click is over
-def _checkForClickOnImages(mouse, images, prevMouseLocation):
-    clickedImage = None
+def _check_for_click_on_images(mouse, images, prev_mouse_location):
+    clicked_image = None
     for image in images:
         if mouse.isPressedIn(image):
-            clickedImage = image
+            clicked_image = image
             while any(mouse.getPressed()):
                 pass
             # Not necessary, but keeps things consistent with the use of checkForTap
-            prevMouseLocation = mouse.getPos()
-    return clickedImage, prevMouseLocation
+            prev_mouse_location = mouse.getPos()
+    return clicked_image, prev_mouse_location
 
 # Checks for a single tap on an image
 # Does this by asking: has the "mouse" moved? (= yes if a tap was received)
 # And: If so, is the "mouse" within the image?
-def _checkForTapOnImages(mouse, images, prevMouseLocation):
-    clickedImage = None
+def _check_for_tap_on_images(mouse, images, prev_mouse_location):
+    clicked_image = None
     mouse_location = mouse.getPos()
     # If the mouse moved... (check x and y coords)
-    if not(mouse_location[0] == prevMouseLocation[0] and mouse_location[1] == prevMouseLocation[1]):
+    if not(mouse_location[0] == prev_mouse_location[0] and mouse_location[1] == prev_mouse_location[1]):
         # If the mouse is within one of the images...
         for image in images:
             if image.contains(mouse):
-                clickedImage = image
-                prevMouseLocation = mouse_location # Update for the next check
-    return clickedImage, prevMouseLocation
+                clicked_image = image
+                prev_mouse_location = mouse_location # Update for the next check
+    return clicked_image, prev_mouse_location
 
 # A helper method that calls another method specific to the set input type
-def checkForInputAnywhere(mouse, prevMouseLocation):
+def check_for_input_anywhere(mouse, prev_mouse_location):
     if USER_INPUT_DEVICE == 'mouse':
-        inputReceived, prevMouseLocation = _checkForClickAnywhere(mouse, prevMouseLocation)
+        input_received, prev_mouse_location = _check_for_click_anywhere(mouse, prev_mouse_location)
     elif USER_INPUT_DEVICE == 'touch':
-        inputReceived, prevMouseLocation = _checkForTapAnywhere(mouse, prevMouseLocation)
+        input_received, prev_mouse_location = _check_for_tap_anywhere(mouse, prev_mouse_location)
     else:
         print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
         core.quit()
-    return inputReceived, prevMouseLocation
+    return input_received, prev_mouse_location
 
-def _checkForClickAnywhere(mouse, prevMouseLocation):
+def _check_for_click_anywhere(mouse, prev_mouse_location):
     clicked = False
     if any(mouse.getPressed()):
         clicked = True
-        prevMouseLocation = mouse.getPos()
+        prev_mouse_location = mouse.getPos()
         while any(mouse.getPressed()): # Wait for the click to end before proceeding
             pass
     
-    return clicked, prevMouseLocation
+    return clicked, prev_mouse_location
 
-def _checkForTapAnywhere(mouse, prevMouseLocation):
+def _check_for_tap_anywhere(mouse, prev_mouse_location):
     tapped = False
     mouse_location = mouse.getPos()
     # If the mouse moved... (check x and y coords)
-    if not(mouse_location[0] == prevMouseLocation[0] and mouse_location[1] == prevMouseLocation[1]):
+    if not(mouse_location[0] == prev_mouse_location[0] and mouse_location[1] == prev_mouse_location[1]):
         tapped = True
 
-    prevMouseLocation = mouse_location
+    prev_mouse_location = mouse_location
 
-    return tapped, prevMouseLocation
+    return tapped, prev_mouse_location
 
-def clearClicksAndEvents(mouse):
+def clear_clicks_and_events(mouse):
     mouse.clickReset()
     event.clearEvents()
 
-def displayBlankScreen(recorder, mediaInfo, mainWindow):
+def display_blank_screen(recorder, media_info, main_window):
     if EYETRACKING_ON:
-        switchDisplays('blank', recorder, mediaInfo)
-    mainWindow.flip()
+        switch_displays('blank', recorder, media_info)
+    main_window.flip()
 
 # Displays a buffer screen with given text, and only proceeds once the user clicks
-def displayBufferScreen(recorder, mediaInfo, mainWindow, mouse, bufferText, quitFunction):
-    displayTextScreen(recorder, mediaInfo, mainWindow, bufferText, "buffer")
-    inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, mouse.getPos())
-    while not inputReceived: # Wait for user input (anywhere on screen)
-        listenForQuit(quitFunction) # Allow the user to quit at this stage, too
-        inputReceived, prevMouseLocation = checkForInputAnywhere(mouse, prevMouseLocation)
+def display_buffer_screen(recorder, media_info, main_window, mouse, buffer_text, quit_function):
+    display_text_screen(recorder, media_info, main_window, buffer_text, "buffer")
+    input_received, prev_mouse_location = check_for_input_anywhere(mouse, mouse.getPos())
+    while not input_received: # Wait for user input (anywhere on screen)
+        listen_for_quit(quit_function) # Allow the user to quit at this stage, too
+        input_received, prev_mouse_location = check_for_input_anywhere(mouse, prev_mouse_location)
 
 # Displays a fixation cross on the screen for 1500ms 
-def displayFixationCrossScreen(recorder, mediaInfo, mainWindow, mouse):
+def display_fixation_cross_screen(recorder, media_info, main_window, mouse):
     if EYETRACKING_ON:
-        switchDisplays('fixation_cross', recorder, mediaInfo)
-    fixationScreen = visual.TextStim(
-        mainWindow,
+        switch_displays('fixation_cross', recorder, media_info)
+    fixation_screen = visual.TextStim(
+        main_window,
         text = '+',
         pos = (0.0, 0.0),
         bold = True,
         height = WINDOW_HEIGHT / 10,
         color = "black")
-    fixationScreen.draw()
-    mainWindow.flip()
+    fixation_screen.draw()
+    main_window.flip()
 
-def displayStimuli(recorder, mediaInfo, stimuli_list, mainWindow):
+def display_stimuli(recorder, media_info, stimuli_list, main_window):
     if EYETRACKING_ON:
-        switchDisplays('stimuli', recorder, mediaInfo)
+        switch_displays('stimuli', recorder, media_info)
     for stimulus in stimuli_list:
         stimulus.draw()
-    mainWindow.flip()
+    main_window.flip()
 
 # Displays a dialog box to get subject number
-def displaySubjIDDialog():
-    guiBox = gui.Dlg()
-    guiBox.addField("Subject ID:")
-    guiBox.show()
-    subjID = int(guiBox.data[0])
-    return subjID
+def display_subj_ID_dialog():
+    gui_box = gui.Dlg()
+    gui_box.addField("Subject ID:")
+    gui_box.show()
+    subj_ID = int(gui_box.data[0])
+    return subj_ID
 
 # Displays a screen with given text (how to proceed from this screen is not a part of this function!)
 # displayName can be None (if this is not a display for the recording process, e.g. the quitting screen)
-def displayTextScreen(recorder, mediaInfo, mainWindow, textToDisplay, displayName):
+def display_text_screen(recorder, media_info, main_window, text_to_display, display_name):
     if EYETRACKING_ON:
-        switchDisplays(displayName, recorder, mediaInfo)
-    textScreen = visual.TextStim(
-        mainWindow,
-        text = textToDisplay,
+        switch_displays(display_name, recorder, media_info)
+    text_screen = visual.TextStim(
+        main_window,
+        text = text_to_display,
         pos = (0.0, 0.0),
         height = WINDOW_HEIGHT / 20,
         wrapWidth = WINDOW_WIDTH,
         color = "black")
-    textScreen.draw()
-    mainWindow.flip()
+    text_screen.draw()
+    main_window.flip()
     
 # Get the images to be displayed for the given trial.
-def getImages(imageFileNames, imageSize, checkmarkSize, repeatIconSize, mainWindow):
-    numberOfImages = len(imageFileNames)
+def get_images(image_file_names, image_size, checkmark_size, repeat_icon_size, main_window):
+    number_of_images = len(image_file_names)
 
     # Create an ImageStim object for each image stimuli, and a unique check object for each image - even though they're all the same check image, they'll end up having different positions
     images = []
     checks = []
-    for i in range(0, numberOfImages):
-        images.append(visual.ImageStim(win = mainWindow, image = Path.cwd()/"visualStims"/str(imageFileNames[i]), units = "pix", size = imageSize))
-        checks.append(visual.ImageStim(win = mainWindow, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmarkSize))
+    for i in range(0, number_of_images):
+        images.append(visual.ImageStim(win = main_window, image = Path.cwd()/"visualStims"/str(image_file_names[i]), units = "pix", size = image_size))
+        checks.append(visual.ImageStim(win = main_window, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmark_size))
 
-    repeatIcon = visual.ImageStim(win = mainWindow, image = Path.cwd()/"repeat.png", units = "pix", size = repeatIconSize)
+    repeat_icon = visual.ImageStim(win = main_window, image = Path.cwd()/"repeat.png", units = "pix", size = repeat_icon_size)
     
-    selectionBox = visual.Rect(win = mainWindow, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = imageSize)
+    selection_box = visual.Rect(win = main_window, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = image_size)
 
-    return images, checks, repeatIcon, selectionBox
+    return images, checks, repeat_icon, selection_box
 
-def getRandomImageOrder(numImages):
+def get_random_image_order(number_of_images):
     # We can think of the images as each having a number index, e.g. with three images, agent = 0, patient = 1, distractor = 2
     # So the images are numbered 0 through numImages - 1. We want a list that tells us their order.
     # So we want to randomize the order of the numbers 0 through numImages - 1.
-    ordered_list = list(range(0, numImages)) # A list of all the image indexes, but in ascending order
+    ordered_list = list(range(0, number_of_images)) # A list of all the image indexes, but in ascending order
     randomly_ordered_list = []
 
-    for i in range(0, numImages):
+    for i in range(0, number_of_images):
        random_num = randint(0, len(ordered_list) - 1) # Choose randomly, from however many numbers we have left to choose
        randomly_ordered_list.append(ordered_list.pop(random_num))
 
     return randomly_ordered_list
 
-def handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, trialClock, clicks, recorder, mediaInfo, mainWindow):
-    numberOfImages = len(images)
+def handle_stimuli_click(image_clicked, images, checks, selection_box, repeat_icon, trial_clock, clicks, recorder, media_info, main_window):
+    number_of_images = len(images)
 
     # Determine the names of the images we're dealing with. These name lists match their order in the experimental items input file!
     ONE_IMAGE_NAME = ["agent"]
@@ -185,71 +185,71 @@ def handleStimuliClick(imageClicked, images, checks, selectionBox, repeatIcon, t
         3: THREE_IMAGE_NAMES,
         4: FOUR_IMAGE_NAMES
     }
-    assert numberOfImages in NAME_LISTS.keys()
-    imageNames = NAME_LISTS[numberOfImages]
+    assert number_of_images in NAME_LISTS.keys()
+    image_names = NAME_LISTS[number_of_images]
 
     # Figure out which image was clicked
-    trialDur = trialClock.getTime()
-    selectionBox.setPos(imageClicked.pos)
+    trial_duration = trial_clock.getTime()
+    selection_box.setPos(image_clicked.pos)
     for i, image in enumerate(images):
-        if imageClicked == image:
-            pic = imageNames[i]
+        if image_clicked == image:
+            pic = image_names[i]
             check = checks[i]
 
-    response = [pic, trialDur]
+    response = [pic, trial_duration]
     clicks.append(response)
 
     # Re-draw to include the selection box and checkmark
-    displayStimuli(recorder, mediaInfo, images + [repeatIcon, selectionBox, check], mainWindow)
+    display_stimuli(recorder, media_info, images + [repeat_icon, selection_box, check], main_window)
     
     return check
 
 # Listens for a keyboard shortcut that tells us to quit the experiment - if detected, it runs the given quit routine
-def listenForQuit(quitFunction):
-    quitKey = 'escape'
+def listen_for_quit(quit_function):
+    quit_key = 'escape'
     keys = event.getKeys()
-    if quitKey in keys:
-        quitFunction()
+    if quit_key in keys:
+        quit_function()
 
-def listenForRepeat(repeatIcon, prevMouseLocation, audio, trialClock, clicks, mouse, recorder):
-    repeatClicked, prevMouseLocation = checkForInputOnImages(mouse, [repeatIcon], prevMouseLocation)
-    if repeatClicked:
+def listen_for_repeat(repeat_icon, prev_mouse_location, audio, trial_clock, clicks, mouse, recorder):
+    repeat_clicked, prev_mouse_location = check_for_input_on_images(mouse, [repeat_icon], prev_mouse_location)
+    if repeat_clicked:
         if EYETRACKING_ON:
-            recordEvent(recorder, "RepeatPressed")
-        playSound(audio, recorder)
+            record_event(recorder, "RepeatPressed")
+        play_sound(audio, recorder)
         pic = "replay"
-        trialDur = trialClock.getTime()
-        response = [pic, trialDur]
+        trial_duration = trial_clock.getTime()
+        response = [pic, trial_duration]
         clicks.append(response)
 
-    return prevMouseLocation
+    return prev_mouse_location
 
-def playSound(audio, recorder):
+def play_sound(audio, recorder):
     if EYETRACKING_ON:
-        recordEvent(recorder, "AudioStart")
+        record_event(recorder, "AudioStart")
     audio.play()
 
     # Note that setPos defines the position of the image's /centre/, and screen positions are determined based on the /centre/ of the screen being (0,0)
-def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon, IMAGE_OFFSET_FROM_EDGE):
-    numberOfImages = len(images)
+def set_image_positions(image_size, checkmark_size, images, checkmarks, repeat_icon, IMAGE_OFFSET_FROM_EDGE):
+    number_of_images = len(images)
 
     # The repeat button's position is always the same, no randomization needed
-    bufferSize = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 15
-    repeatIcon.setPos([-WINDOW_WIDTH / 2 + bufferSize,-WINDOW_HEIGHT / 2 + bufferSize])
+    buffer_size = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 15
+    repeat_icon.setPos([-WINDOW_WIDTH / 2 + buffer_size,-WINDOW_HEIGHT / 2 + buffer_size])
 
     # Calculate positions for the images relative to the window
-    xSpacing = (WINDOW_WIDTH / 2) - (imageSize / 2) #i.e. distance from centre of screen to centre of image in order for the image to be against one side of the screen
-    ySpacing = (WINDOW_HEIGHT / 2) - (imageSize / 2)
-    left = -xSpacing + IMAGE_OFFSET_FROM_EDGE
-    right = xSpacing - IMAGE_OFFSET_FROM_EDGE
-    bottom = -ySpacing + IMAGE_OFFSET_FROM_EDGE
-    top = ySpacing - IMAGE_OFFSET_FROM_EDGE
+    x_spacing = (WINDOW_WIDTH / 2) - (image_size / 2) #i.e. distance from centre of screen to centre of image in order for the image to be against one side of the screen
+    y_spacing = (WINDOW_HEIGHT / 2) - (image_size / 2)
+    left = -x_spacing + IMAGE_OFFSET_FROM_EDGE
+    right = x_spacing - IMAGE_OFFSET_FROM_EDGE
+    bottom = -y_spacing + IMAGE_OFFSET_FROM_EDGE
+    top = y_spacing - IMAGE_OFFSET_FROM_EDGE
     centre = 0
     # Position the checkmarks just above/below the image. This offset should be added/subtracted from the corresponding image's position.
-    checkOffset = imageSize / 2 + checkmarkSize / 2
+    checkmark_offset = image_size / 2 + checkmark_size / 2
 
     # Randomly determine the images' order (and therfore, positions)
-    random_ordering_of_images = getRandomImageOrder(numberOfImages)
+    random_ordering_of_images = get_random_image_order(number_of_images)
 
     # Determine the image positions we'll be using, based on the # of images
     ONE_POSITION = [[centre, centre]]
@@ -262,29 +262,29 @@ def setImagePositions(imageSize, checkmarkSize, images, checks, repeatIcon, IMAG
         3: THREE_POSITIONS,
         4: FOUR_POSITIONS
     }
-    assert numberOfImages in POSITION_LISTS.keys()
-    imagePositions = POSITION_LISTS[numberOfImages]
+    assert number_of_images in POSITION_LISTS.keys()
+    image_positions = POSITION_LISTS[number_of_images]
 
     # Now set their positions based on that random order!
-    for i, imagePosition in enumerate(imagePositions):
-        images[random_ordering_of_images[i]].setPos(imagePosition)
+    for i, image_position in enumerate(image_positions):
+        images[random_ordering_of_images[i]].setPos(image_position)
         # Put the check below the image UNLESS the image is already at the bottom of the screen, in which case put the check above the image
-        checks[random_ordering_of_images[i]].setPos([imagePosition[0], imagePosition[1] - checkOffset if imagePosition[1] != bottom else imagePosition[1] + checkOffset])
+        checkmarks[random_ordering_of_images[i]].setPos([image_position[0], image_position[1] - checkmark_offset if image_position[1] != bottom else image_position[1] + checkmark_offset])
 
-    return images, checks, repeatIcon
+    return images, checkmarks, repeat_icon
 
 # Either the new or current display can be None, indicating this is the last or first display
-# If newDisplayName = None, we only finish with the previous display, we don't add a new one
-# If currentDisplay = None, we do not finish any previous display (because we're saying there isn't one!), we merely note the start time of this new screen
+# If new_display_name = None, we only finish with the previous display, we don't add a new one
+# If current_display = None, we do not finish any previous display (because we're saying there isn't one!), we merely note the start time of this new screen
 # If both are None, we are neither beginning nor finishing with a screen (i.e. this is a dummy call - we don't want TPL to know about this display at all)
-def switchDisplays(newDisplayName, recorder, mediaInfo):
-    global currentDisplay
-    global currentDisplayStartTime
+def switch_displays(new_display_name, recorder, media_info):
+    global current_display
+    global current_display_start_time
     # Store the start time for the new display (and finish with the old one, if there was one).
-    if currentDisplay == None and newDisplayName == None: # No switch at all
+    if current_display == None and new_display_name == None: # No switch at all
         pass
-    elif currentDisplay == None: # No previous display, but we're starting a new one
-        currentDisplayStartTime = int((recorder.get_time_stamp())['timestamp'])
+    elif current_display == None: # No previous display, but we're starting a new one
+        current_display_start_time = int((recorder.get_time_stamp())['timestamp'])
     else: # We are finishing with a previous display
-        currentDisplayStartTime = finishDisplayingStimulus(currentDisplayStartTime, mediaInfo[currentDisplay], recorder)
-    currentDisplay = newDisplayName # Update the current display
+        current_display_start_time = finish_displaying_stimulus(current_display_start_time, media_info[current_display], recorder)
+    current_display = new_display_name # Update the current display

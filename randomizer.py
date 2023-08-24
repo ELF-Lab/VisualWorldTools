@@ -3,7 +3,7 @@
 
 import csv, random, codecs, numpy
 
-#### latinSquare takes an experimental csv file, in the local directory
+#### latin_square takes an experimental csv file, in the local directory
 #### and returns a shuffled experimental list.
 #### It first selects a subset of the items in the experimental csv file that correspond to the 
 #### appropriate list.
@@ -13,79 +13,89 @@ import csv, random, codecs, numpy
 #### Given the sorting algorithm, you need more filler items than the total number of experimental items 
 
 
-def latinSquare(curList, itemFile):
-	with open(itemFile) as csvFile:										## Load experimentalItems file 
-		stimFile = csv.reader(csvFile)
-		stimList = [item for item in stimFile]
+def latin_square(current_list, item_file):
+	# Load experimental_items file
+	with open(item_file) as csv_file: 
+		stim_file = csv.reader(csv_file)
+		stim_list = [item for item in stim_file]
 		
-	stimDictionary 	= {}																## Organize into dictionary
+	# Organize into dictionary
+	stim_dictionary = {}
 		
-	for item in stimList:
-		stimDictionary.setdefault(item[0],[]).append(item[1:]) 
-
-	exptItems 		= {}																## create dictionary to hold experimental items; subset of stimulus dictionary that contains appropriate latin square list.
+	for item in stim_list:
+		stim_dictionary.setdefault(item[0], []).append(item[1:]) 
 	
-	experiments = list(stimDictionary.keys())													## populate dictionary with filler and experimental items
+	# Create dictionary to hold experimental items; subset of stimulus dictionary that contains appropriate latin square list.
+	experimental_items = {}
+	
+	# Populate dictionary with filler and experimental items
+	experiments = list(stim_dictionary.keys())
 	experiments.remove('Filler')
-	for item in stimDictionary['Filler']:
-		exptItems.setdefault('Filler',[]).append(item)
+	for item in stim_dictionary['Filler']:
+		experimental_items.setdefault('Filler', []).append(item)
 		
 	for expt in experiments:
-		numConditions = int(max([item[1] for item in stimDictionary[expt]]))			## get number of conditions
-		# Check that the provided value for curList is within the expected range
-		assert curList <= numConditions, "Value for curList in latinSquare is higher than permissible."
-		assert curList > 0, "Value for curList in latinSquare is lower than permissible."
-		numItems = len(stimDictionary[expt])											## get number of items
-		condSequence = numpy.tile(range(1,numConditions+1), numItems)								## generate sequence of conditions
-		currentItems = [ (str(item), str(condSequence[(item-1)+(curList-1)]) ) for item in range(1,numItems+1)]	## select appropriate list
+		# Get number of conditions
+		number_of_conditions = int(max([item[1] for item in stim_dictionary[expt]]))
+		# Check that the provided value for current_list is within the expected range
+		assert current_list <= number_of_conditions, "Value for current_list in latin_square is higher than permissible."
+		assert current_list > 0, "Value for current_list in latin_square is lower than permissible."
+		# Get number of items
+		number_of_items = len(stim_dictionary[expt])
+		# Generate sequence of conditions
+		condition_sequence = numpy.tile(range(1, number_of_conditions + 1), number_of_items)
+		# Select appropriate list
+		current_items = [(str(item), str(condition_sequence[(item - 1) + (current_list - 1)])) for item in range(1, number_of_items + 1)]
 		# currentItems should be lists of Item/Condition pairs like [1,1], [1,2], [2,1], etc.
 
-		### Note that Latin Squaring here works by taking an item number, and looking up the corresponding condition in the 
-		### condSequence list. The starting point in the condition sequence is offset by the curList value. 
+		# Note that Latin Squaring here works by taking an item number, and looking up the corresponding condition in the 
+		# condition_sequence list. The starting point in the condition sequence is offset by the current_list value. 
 		
-		for item in stimDictionary[expt]:												## Once we have a list of tuples that are the current experimental items
-			if tuple(item[0:2]) in currentItems:										## then include an item in the stim dictionary in the experimental item dictionary if it is in the currentItems list
-				exptItems.setdefault(expt,[]).append(item)
-		
-	for expt in exptItems.keys():														## Shuffle all lists within the exptItems dictionary
-		random.shuffle(exptItems[expt])
-	
-### Iterate through shuffled item lists to create master list, subject to constraint that no two items are next to each other.
+		# Once we have a list of tuples that are the current experimental items
+		# then include an item in the stim dictionary in the experimental item dictionary if it is in the current_items list
+		for item in stim_dictionary[expt]:
+			if tuple(item[0:2]) in current_items:
+				experimental_items.setdefault(expt,[]).append(item)
 
-	experimentalList = []
-	lastExpt = 'NA'
-	remainingExpts = list(exptItems.keys())
+	# Shuffle all lists within the experimental_items dictionary	
+	for expt in experimental_items.keys():
+		random.shuffle(experimental_items[expt])
 	
-### Iterate through shuffled lists of sub experiments, popping off elements of those lists and appending them to the final experimentalList
+	# Iterate through shuffled item lists to create master list, subject to constraint that no two items are next to each other.
+	experimental_list = []
+	last_expt = 'NA'
+	remaining_expts = list(experimental_items.keys())
 	
-	while(len(remainingExpts) > 1):
-		tryExpt = random.choice(remainingExpts)
-		if (tryExpt == lastExpt):
+	# Iterate through shuffled lists of sub experiments, popping off elements of those lists and appending them to the final experimental_list	
+	while(len(remaining_expts) > 1):
+		try_expt = random.choice(remaining_expts)
+		if (try_expt == last_expt):
 			continue
 		else:
-			if len(exptItems[tryExpt]) > 0:
-				experimentalList.append([tryExpt]+exptItems[tryExpt].pop())
-				lastExpt = tryExpt
+			if len(experimental_items[try_expt]) > 0:
+				experimental_list.append([try_expt]+experimental_items[try_expt].pop())
+				last_expt = try_expt
 			else:
-				remainingExpts.remove(tryExpt)
+				remaining_expts.remove(try_expt)
 	
-	if ('Filler' not in remainingExpts) and (len(remainingExpts) > 0):
+	if ('Filler' not in remaining_expts) and (len(remaining_expts) > 0):
 		print('WARNING: insufficient filler items. Items from the same experiment may occur adjacent to each other in list.')
 	
-	### Randomly insert remaining items
-	for item in exptItems[remainingExpts[0]]:
-		experimentalList.insert(random.randrange(len(experimentalList)+1),[remainingExpts[0]]+item)
+	# Randomly insert remaining items
+	for item in experimental_items[remaining_expts[0]]:
+		experimental_list.insert(random.randrange(len(experimental_list) + 1),[remaining_expts[0]] + item)
 
 	# Safety checks
 	# Ensure that each item/cond matching is as expected based on participant
-	for row in experimentalList:
+	for row in experimental_list:
 		if (row[0] == 'Exp'): # The check isn't relevant for filler rows
-			itemNumber = int(row[1])
-			condNumber = int(row[2])
-			expectedCondNumber = ((itemNumber % numConditions) + curList - 1) % numConditions # Remember that the values of curList range from 1 to the number of conditions
-			if expectedCondNumber == 0:
-				expectedCondNumber = numConditions
-			assert condNumber == expectedCondNumber, f"LatinSquare is not providing the expected condition number for item {itemNumber}. \nExpected condition: {expectedCondNumber}, provided condition: {condNumber}"
+			item_number = int(row[1])
+			condition_number = int(row[2])
+			# Remember that the values of current_list range from 1 to the number of conditions
+			expected_condition_number = ((item_number % number_of_conditions) + current_list - 1) % number_of_conditions
+			if expected_condition_number == 0:
+				expected_condition_number = number_of_conditions
+			assert condition_number == expected_condition_number, f"latin_square is not providing the expected condition number for item {item_number}. \nExpected condition: {expected_condition_number}, provided condition: {condition_number}"
 			
-	return experimentalList
+	return experimental_list
 
