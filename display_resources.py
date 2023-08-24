@@ -98,7 +98,7 @@ def display_buffer_screen(recorder, media_info, main_window, mouse, buffer_text,
         input_received, prev_mouse_location = check_for_input_anywhere(mouse, prev_mouse_location)
 
 # Displays a fixation cross on the screen for 1500ms 
-def display_fixation_cross_screen(recorder, media_info, main_window, mouse):
+def display_fixation_cross_screen(recorder, media_info, main_window):
     if EYETRACKING_ON:
         switch_displays('fixation_cross', recorder, media_info)
     fixation_screen = visual.TextStim(
