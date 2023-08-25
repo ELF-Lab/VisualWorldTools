@@ -89,10 +89,11 @@ def display_blank_screen(recorder, media_info, main_window):
         switch_displays('blank', recorder, media_info)
     main_window.flip()
 
-# Displays a buffer screen with given text, and only proceeds once the user clicks
+# Displays a buffer screen with given text, and only proceeds once the user clicks/taps/etc on screen
 def display_buffer_screen(recorder, media_info, main_window, mouse, buffer_text, quit_function):
     display_text_screen(recorder, media_info, main_window, buffer_text, "buffer")
-    input_received, prev_mouse_location = check_for_input_anywhere(mouse, mouse.getPos())
+    input_received = False
+    prev_mouse_location = mouse.getPos()
     while not input_received: # Wait for user input (anywhere on screen)
         listen_for_quit(quit_function) # Allow the user to quit at this stage, too
         input_received, prev_mouse_location = check_for_input_anywhere(mouse, prev_mouse_location)

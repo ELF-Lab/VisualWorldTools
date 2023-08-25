@@ -181,7 +181,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
     trial_duration = trial_clock.getTime()
-    response = ["check", trial_duration]
+    response = ["checkmark", trial_duration]
     clicks.append(response)
 
     positions = [image.pos for image in images]
