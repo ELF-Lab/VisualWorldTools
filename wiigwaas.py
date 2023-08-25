@@ -193,10 +193,10 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
 # Give the recorder info about what images are on the screen, so that we can track gazes within those image areas
 def add_images_to_recorder():
     # Add an overall background image (at present this is really just a placeholder)
-    stimuli_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\sample_trial_screen.jpeg"
-    fixation_cross_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\fixation_cross.jpeg"
-    buffer_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\buffer_screen.jpeg"
-    blank_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\blank_screen.jpeg"
+    stimuli_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\screen_images\\sample_trial_screen.jpeg"
+    fixation_cross_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\screen_images\\fixation_cross_screen.jpeg"
+    buffer_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\screen_images\\buffer_screen.jpeg"
+    blank_image_path = "C:\\Users\\Anna\\Documents\\Wiigwaas\\screen_images\\blank_screen.jpeg"
     media_info = {}
     media_info = add_image_to_recorder(recorder, media_info, stimuli_image_path, "stimuli")
     media_info = add_image_to_recorder(recorder, media_info, fixation_cross_image_path, "fixation_cross")

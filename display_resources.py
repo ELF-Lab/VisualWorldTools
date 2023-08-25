@@ -151,9 +151,9 @@ def get_images(image_file_names, image_size, checkmark_size, repeat_icon_size, m
     checkmarks = []
     for i in range(0, number_of_images):
         images.append(visual.ImageStim(win = main_window, image = Path.cwd()/"visualStims"/str(image_file_names[i]), units = "pix", size = image_size))
-        checkmarks.append(visual.ImageStim(win = main_window, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmark_size))
+        checkmarks.append(visual.ImageStim(win = main_window, image = Path.cwd()/"icons"/"checkmark.png", units = "pix", size = checkmark_size))
 
-    repeat_icon = visual.ImageStim(win = main_window, image = Path.cwd()/"repeat.png", units = "pix", size = repeat_icon_size)
+    repeat_icon = visual.ImageStim(win = main_window, image = Path.cwd()/"icons"/"repeat.png", units = "pix", size = repeat_icon_size)
     
     selection_box = visual.Rect(win = main_window, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = image_size)
 
