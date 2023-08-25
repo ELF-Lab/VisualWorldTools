@@ -84,7 +84,7 @@ def create_output_file(subj_ID):
     return output_file
 
 def get_experimental_items(subjID):
-    EXP_ITEMS_FILE_NAME = 'experimental_items-small.csv'
+    EXP_ITEMS_FILE_NAME = 'experimentalItems-small.csv'
     NUMBER_OF_LISTS = 4
     
     # Calculate current list based on subject number.
@@ -133,7 +133,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
 
     # Drift check sequence
     if EYETRACKING_ON:
-        display_fixation_cross_screen(recorder, media_info, main_window, mouse)
+        display_fixation_cross_screen(recorder, media_info, main_window)
         if not drift_check(main_window):
             display_text_screen(recorder, media_info, main_window, "Re-calibration needed. Entering calibration...", "buffer")
             core.wait(WAIT_TIME_BEFORE_RECALIBRATING)
