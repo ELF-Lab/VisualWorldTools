@@ -3,7 +3,7 @@ from pathlib import *
 from psychopy import core, event, monitors, sound, visual
 from randomizer import latin_square
 from config import *
-from display_resources import check_for_input_on_images, clear_clicks_and_events, display_blank_screen, display_buffer_screen, display_fixation_cross_screen, display_subj_ID_dialog, display_text_screen,get_images, handle_stimuli_click, display_stimuli, listen_for_quit, listen_for_repeat, play_sound, set_image_positions
+from display_resources import check_for_input_on_images, clear_clicks_and_events, display_blank_screen, display_buffer_screen, display_fixation_cross_screen, display_subj_ID_dialog, display_text_screen,get_images, handle_input_on_stimulus, display_stimuli_screen, listen_for_quit, listen_for_repeat, play_sound, set_image_positions
 from eye_tracking_resources import add_AOI, add_image_to_recorder, calibrate_recorder, close_recorder, drift_check, set_up_recorder, start_recording_gaze, stop_recording_gaze
 
 # Global constants - the only variables defined here are those that need to be accessed by many functions
@@ -119,9 +119,9 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
     audio = sound.Sound(Path.cwd()/"audio"/str(audio_file_name))
 
     # Get the relevant images
-    images, checks, repeat_icon, selection_box = get_images(image_file_names, IMAGE_SIZE, CHECKMARK_SIZE, REPEAT_ICON_SIZE, main_window)
+    images, checkmarks, repeat_icon, selection_box = get_images(image_file_names, IMAGE_SIZE, CHECKMARK_SIZE, REPEAT_ICON_SIZE, main_window)
     # Determine the position of each image
-    images, checks, repeat_icon = set_image_positions(IMAGE_SIZE, CHECKMARK_SIZE, images, checks, repeat_icon, IMAGE_OFFSET_FROM_EDGE)
+    images, checkmarks, repeat_icon = set_image_positions(IMAGE_SIZE, CHECKMARK_SIZE, images, checkmarks, repeat_icon, IMAGE_OFFSET_FROM_EDGE)
 
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
@@ -142,7 +142,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
         core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
     
     # Display the images, and then pause before the audio is played
-    display_stimuli(recorder, media_info, images + [repeat_icon], main_window)
+    display_stimuli_screen(recorder, media_info, main_window, images + [repeat_icon])
     # core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
     # Prepare for clicks, play the audio file, and start the timer - the user may interact starting now!
@@ -161,7 +161,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
         image_clicked, prev_mouse_location = check_for_input_on_images(mouse, images, prev_mouse_location)
 
     # Now, we've received a first click on one of the images
-    check = handle_stimuli_click(image_clicked,images, checks, selection_box, repeat_icon, trial_clock, clicks, recorder, media_info, main_window)
+    checkmark = handle_input_on_stimulus(image_clicked, images, checkmarks, selection_box, repeat_icon, trial_clock, clicks, recorder, media_info, main_window)
 
     # Now we wait in this loop until the checkmark is ultimately clicked
     checkmark_clicked = False
@@ -174,10 +174,10 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
         # Always listening for a click on an image
         image_clicked, prev_mouse_location = check_for_input_on_images(mouse, images, prev_mouse_location)
         if image_clicked:
-            check = handle_stimuli_click(image_clicked, images, checks, selection_box, repeat_icon, trial_clock, clicks, recorder, media_info, main_window)
+            checkmark = handle_input_on_stimulus(image_clicked, images, checkmarks, selection_box, repeat_icon, trial_clock, clicks, recorder, media_info, main_window)
 
         # Always listening for a click on the checkmark
-        checkmark_clicked, prev_mouse_location = check_for_input_on_images(mouse, [check], prev_mouse_location)
+        checkmark_clicked, prev_mouse_location = check_for_input_on_images(mouse, [checkmark], prev_mouse_location)
            
     # Once we reach here, the check has been clicked (i.e. the trial is over)
     trial_duration = trial_clock.getTime()

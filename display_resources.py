@@ -12,13 +12,13 @@ current_display_start_time = None
 # A helper method that calls another method specific to the set input type
 def check_for_input_on_images(mouse, images, prev_mouse_location):
     if USER_INPUT_DEVICE == 'mouse':
-        clicked_image, prev_mouse_location = _check_for_click_on_images(mouse, images, prev_mouse_location)
+        selected_image, prev_mouse_location = _check_for_click_on_images(mouse, images, prev_mouse_location)
     elif USER_INPUT_DEVICE == 'touch':
-        clicked_image, prev_mouse_location = _check_for_tap_on_images(mouse, images, prev_mouse_location)
+        selected_image, prev_mouse_location = _check_for_tap_on_images(mouse, images, prev_mouse_location)
     else:
         print("Error: User input device is not set to a valid value (mouse or touch). Quitting...")
         core.quit()
-    return clicked_image, prev_mouse_location
+    return selected_image, prev_mouse_location
 
 # Given a list of images, returns the one that is being clicked (or None)
 # Hold for the duration of the click - so that when this function ends, the click is over
@@ -37,16 +37,16 @@ def _check_for_click_on_images(mouse, images, prev_mouse_location):
 # Does this by asking: has the "mouse" moved? (= yes if a tap was received)
 # And: If so, is the "mouse" within the image?
 def _check_for_tap_on_images(mouse, images, prev_mouse_location):
-    clicked_image = None
+    tapped_image = None
     mouse_location = mouse.getPos()
     # If the mouse moved... (check x and y coords)
     if not(mouse_location[0] == prev_mouse_location[0] and mouse_location[1] == prev_mouse_location[1]):
         # If the mouse is within one of the images...
         for image in images:
             if image.contains(mouse):
-                clicked_image = image
+                tapped_image = image
                 prev_mouse_location = mouse_location # Update for the next check
-    return clicked_image, prev_mouse_location
+    return tapped_image, prev_mouse_location
 
 # A helper method that calls another method specific to the set input type
 def check_for_input_anywhere(mouse, prev_mouse_location):
@@ -97,7 +97,7 @@ def display_buffer_screen(recorder, media_info, main_window, mouse, buffer_text,
         listen_for_quit(quit_function) # Allow the user to quit at this stage, too
         input_received, prev_mouse_location = check_for_input_anywhere(mouse, prev_mouse_location)
 
-# Displays a fixation cross on the screen for 1500ms 
+# Displays a fixation cross on the screen
 def display_fixation_cross_screen(recorder, media_info, main_window):
     if EYETRACKING_ON:
         switch_displays('fixation_cross', recorder, media_info)
@@ -111,20 +111,12 @@ def display_fixation_cross_screen(recorder, media_info, main_window):
     fixation_screen.draw()
     main_window.flip()
 
-def display_stimuli(recorder, media_info, stimuli_list, main_window):
+def display_stimuli_screen(recorder, media_info, main_window, stimuli_list):
     if EYETRACKING_ON:
         switch_displays('stimuli', recorder, media_info)
     for stimulus in stimuli_list:
         stimulus.draw()
     main_window.flip()
-
-# Displays a dialog box to get subject number
-def display_subj_ID_dialog():
-    gui_box = gui.Dlg()
-    gui_box.addField("Subject ID:")
-    gui_box.show()
-    subj_ID = int(gui_box.data[0])
-    return subj_ID
 
 # Displays a screen with given text (how to proceed from this screen is not a part of this function!)
 # displayName can be None (if this is not a display for the recording process, e.g. the quitting screen)
@@ -140,23 +132,32 @@ def display_text_screen(recorder, media_info, main_window, text_to_display, disp
         color = "black")
     text_screen.draw()
     main_window.flip()
-    
+
+# Displays a dialog box to get subject number
+def display_subj_ID_dialog():
+    gui_box = gui.Dlg()
+    gui_box.addField("Subject ID:")
+    gui_box.show()
+    subj_ID = int(gui_box.data[0])
+
+    return subj_ID
+
 # Get the images to be displayed for the given trial.
 def get_images(image_file_names, image_size, checkmark_size, repeat_icon_size, main_window):
     number_of_images = len(image_file_names)
 
     # Create an ImageStim object for each image stimuli, and a unique check object for each image - even though they're all the same check image, they'll end up having different positions
     images = []
-    checks = []
+    checkmarks = []
     for i in range(0, number_of_images):
         images.append(visual.ImageStim(win = main_window, image = Path.cwd()/"visualStims"/str(image_file_names[i]), units = "pix", size = image_size))
-        checks.append(visual.ImageStim(win = main_window, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmark_size))
+        checkmarks.append(visual.ImageStim(win = main_window, image = Path.cwd()/"checkmark.png", units = "pix", size = checkmark_size))
 
     repeat_icon = visual.ImageStim(win = main_window, image = Path.cwd()/"repeat.png", units = "pix", size = repeat_icon_size)
     
     selection_box = visual.Rect(win = main_window, lineWidth = 2.5, lineColor = "#7AC043", fillColor = None, units = "pix", size = image_size)
 
-    return images, checks, repeat_icon, selection_box
+    return images, checkmarks, repeat_icon, selection_box
 
 def get_random_image_order(number_of_images):
     # We can think of the images as each having a number index, e.g. with three images, agent = 0, patient = 1, distractor = 2
@@ -171,7 +172,8 @@ def get_random_image_order(number_of_images):
 
     return randomly_ordered_list
 
-def handle_stimuli_click(image_clicked, images, checks, selection_box, repeat_icon, trial_clock, clicks, recorder, media_info, main_window):
+def handle_input_on_stimulus(selected_image, images, checkmarks, selection_box, repeat_icon, trial_clock, clicks, recorder, media_info, main_window):
+    assert(selected_image != None)
     number_of_images = len(images)
 
     # Determine the names of the images we're dealing with. These name lists match their order in the experimental items input file!
@@ -188,21 +190,21 @@ def handle_stimuli_click(image_clicked, images, checks, selection_box, repeat_ic
     assert number_of_images in NAME_LISTS.keys()
     image_names = NAME_LISTS[number_of_images]
 
-    # Figure out which image was clicked
+    # Figure out which image was selected
     trial_duration = trial_clock.getTime()
-    selection_box.setPos(image_clicked.pos)
+    selection_box.setPos(selected_image.pos)
     for i, image in enumerate(images):
-        if image_clicked == image:
+        if selected_image == image:
             pic = image_names[i]
-            check = checks[i]
+            checkmark = checkmarks[i]
 
     response = [pic, trial_duration]
     clicks.append(response)
 
     # Re-draw to include the selection box and checkmark
-    display_stimuli(recorder, media_info, images + [repeat_icon, selection_box, check], main_window)
+    display_stimuli_screen(recorder, media_info, main_window, images + [repeat_icon, selection_box, checkmark])
     
-    return check
+    return checkmark
 
 # Listens for a keyboard shortcut that tells us to quit the experiment - if detected, it runs the given quit routine
 def listen_for_quit(quit_function):
