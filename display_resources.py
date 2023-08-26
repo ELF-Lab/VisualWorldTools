@@ -3,7 +3,7 @@ from pathlib import *
 from psychopy import core, event, gui, visual
 from config import *
 # Ideally we should minimze imports from here, but there is some overlap between what's on screen and what TPL needs to know.
-from eye_tracking_resources import finish_displaying_stimulus, record_event
+from eye_tracking_resources import finish_display, record_event
 
 # These need to be updated throughout the experiment, to send messages about what is being shown on screen
 current_display = None
@@ -84,14 +84,14 @@ def clear_clicks_and_events(mouse):
     mouse.clickReset()
     event.clearEvents()
 
-def display_blank_screen(recorder, media_info, main_window):
+def display_blank_screen(recorder, main_window):
     if EYETRACKING_ON:
-        switch_displays('blank', recorder, media_info)
+        switch_displays('blank', recorder)
     main_window.flip()
 
 # Displays a buffer screen with given text, and only proceeds once the user clicks/taps/etc on screen
-def display_buffer_screen(recorder, media_info, main_window, mouse, buffer_text, quit_function):
-    display_text_screen(recorder, media_info, main_window, buffer_text, "buffer")
+def display_buffer_screen(recorder, main_window, mouse, buffer_text, quit_function):
+    display_text_screen(recorder, main_window, buffer_text, "buffer")
     input_received = False
     prev_mouse_location = mouse.getPos()
     while not input_received: # Wait for user input (anywhere on screen)
@@ -99,9 +99,9 @@ def display_buffer_screen(recorder, media_info, main_window, mouse, buffer_text,
         input_received, prev_mouse_location = check_for_input_anywhere(mouse, prev_mouse_location)
 
 # Displays a fixation cross on the screen
-def display_fixation_cross_screen(recorder, media_info, main_window):
+def display_fixation_cross_screen(recorder, main_window):
     if EYETRACKING_ON:
-        switch_displays('fixation_cross', recorder, media_info)
+        switch_displays('fixation_cross', recorder)
     fixation_screen = visual.TextStim(
         main_window,
         text = '+',
@@ -112,18 +112,18 @@ def display_fixation_cross_screen(recorder, media_info, main_window):
     fixation_screen.draw()
     main_window.flip()
 
-def display_stimuli_screen(recorder, media_info, main_window, stimuli_list):
+def display_stimuli_screen(recorder, main_window, stimuli_list):
     if EYETRACKING_ON:
-        switch_displays('stimuli', recorder, media_info)
+        switch_displays('stimuli', recorder)
     for stimulus in stimuli_list:
         stimulus.draw()
     main_window.flip()
 
 # Displays a screen with given text (how to proceed from this screen is not a part of this function!)
 # displayName can be None (if this is not a display for the recording process, e.g. the quitting screen)
-def display_text_screen(recorder, media_info, main_window, text_to_display, display_name):
+def display_text_screen(recorder, main_window, text_to_display, display_name):
     if EYETRACKING_ON:
-        switch_displays(display_name, recorder, media_info)
+        switch_displays(display_name, recorder)
     text_screen = visual.TextStim(
         main_window,
         text = text_to_display,
@@ -173,7 +173,7 @@ def get_random_image_order(number_of_images):
 
     return randomly_ordered_list
 
-def handle_input_on_stimulus(selected_image, images, checkmarks, selection_box, repeat_icon, trial_clock, clicks, recorder, media_info, main_window):
+def handle_input_on_stimulus(selected_image, images, checkmarks, selection_box, repeat_icon, trial_clock, clicks, recorder, main_window):
     assert(selected_image != None)
     number_of_images = len(images)
 
@@ -203,7 +203,7 @@ def handle_input_on_stimulus(selected_image, images, checkmarks, selection_box, 
     clicks.append(response)
 
     # Re-draw to include the selection box and checkmark
-    display_stimuli_screen(recorder, media_info, main_window, images + [repeat_icon, selection_box, checkmark])
+    display_stimuli_screen(recorder, main_window, images + [repeat_icon, selection_box, checkmark])
     
     return checkmark
 
@@ -280,7 +280,7 @@ def set_image_positions(image_size, checkmark_size, images, checkmarks, repeat_i
 # If new_display_name = None, we only finish with the previous display, we don't add a new one
 # If current_display = None, we do not finish any previous display (because we're saying there isn't one!), we merely note the start time of this new screen
 # If both are None, we are neither beginning nor finishing with a screen (i.e. this is a dummy call - we don't want TPL to know about this display at all)
-def switch_displays(new_display_name, recorder, media_info):
+def switch_displays(new_display_name, recorder):
     global current_display
     global current_display_start_time
     # Store the start time for the new display (and finish with the old one, if there was one).
@@ -289,5 +289,5 @@ def switch_displays(new_display_name, recorder, media_info):
     elif current_display == None: # No previous display, but we're starting a new one
         current_display_start_time = int((recorder.get_time_stamp())['timestamp'])
     else: # We are finishing with a previous display
-        current_display_start_time = finish_displaying_stimulus(current_display_start_time, media_info[current_display], recorder)
+        current_display_start_time = finish_display(current_display_start_time, current_display, recorder)
     current_display = new_display_name # Update the current display

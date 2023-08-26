@@ -7,6 +7,8 @@ from config import WINDOW_HEIGHT, WINDOW_WIDTH
 participant_ID = None
 recording_ID = None
 tracker = None
+# Dictionary containing key-value pairs of screen names and media IDS, e.g. {"buffer": 8273891}
+media_info = None
 
 # All measurements in pixels
 FIXATION_ZONE_SIZE = 40 # How far from the centre the gaze can be, either direction along both axes
@@ -15,18 +17,17 @@ RIGHT_FIXATION_BOUNDARY = WINDOW_WIDTH / 2 + FIXATION_ZONE_SIZE
 TOP_FIXATION_BOUNDARY = WINDOW_HEIGHT / 2 - FIXATION_ZONE_SIZE
 BOTTOM_FIXATION_BOUNDARY = WINDOW_HEIGHT / 2 + FIXATION_ZONE_SIZE
 
-def add_AOI(pro_lab_conection, image_id, aoi_name, aoi_color, vertices):
+def add_AOI(pro_lab_conection, display_name, aoi_name, aoi_color, vertices):
     tag_name = 'test_tag'
     group_name = 'test_group'
 
-    pro_lab_conection.add_aois_to_image(image_id, aoi_name, aoi_color, vertices, tag_name = tag_name, group_name = group_name)
+    pro_lab_conection.add_aois_to_image(media_info[display_name]['media_id'], aoi_name, aoi_color, vertices, tag_name = tag_name, group_name = group_name)
 
 # Tell TPL what image we're using during a gaze recording
-def add_image_to_recorder(pro_lab_conection, media_info, image_path, image_name):
+def add_image_to_recorder(pro_lab_conection, image_path, image_name):
+    global media_info
     media_type = "image"
     media_info.update({image_name: pro_lab_conection.upload_media(image_path, media_type)})
-
-    return media_info
 
 def calibrate_recorder(main_window, mouse, pro_lab_conection):
     record_event(pro_lab_conection, "CalibrationStart")
@@ -82,10 +83,10 @@ def _compare_gaze_and_target(main_window):
 
     return on_target
 
-# We need to tell TPL when we're doing with the relevant image
-def finish_displaying_stimulus(start_time, media_item, pro_lab_conection):
+# We need to tell TPL when we're done with the relevant display
+def finish_display(start_time, display_name, pro_lab_conection):
     end_time = int((pro_lab_conection.get_time_stamp())['timestamp'])
-    pro_lab_conection.send_stimulus_event(recording_ID, start_timestamp = str(start_time), media_id = media_item['media_id'], end_timestamp = end_time)
+    pro_lab_conection.send_stimulus_event(recording_ID, start_timestamp = str(start_time), media_id = media_info[display_name]['media_id'], end_timestamp = end_time)
     return end_time
 
 def record_event(pro_lab_conection, event_description):
@@ -96,6 +97,7 @@ def record_event(pro_lab_conection, event_description):
 def set_up_recorder(main_window, mouse, participant_name):
     global participant_ID
     global tracker
+    global media_info
 
     # Specify the kind of eyetracker we are using, and an identifier for the participant
     settings = Titta.get_defaults("Tobii Pro Fusion")
@@ -110,6 +112,8 @@ def set_up_recorder(main_window, mouse, participant_name):
     participant_ID = (pro_lab_conection.add_participant(participant_name))['participant_id']
 
     calibrate_recorder(main_window, mouse, pro_lab_conection)
+
+    media_info = {}
 
     return pro_lab_conection
 
