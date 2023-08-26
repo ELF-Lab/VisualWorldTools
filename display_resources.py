@@ -238,7 +238,7 @@ def set_image_positions(image_size, checkmark_size, images, checkmarks, repeat_i
 
     # The repeat button's position is always the same, no randomization needed
     buffer_size = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 15
-    repeat_icon.setPos([-WINDOW_WIDTH / 2 + buffer_size,-WINDOW_HEIGHT / 2 + buffer_size])
+    repeat_icon.setPos([-WINDOW_WIDTH / 2 + buffer_size, -WINDOW_HEIGHT / 2 + buffer_size])
 
     # Calculate positions for the images relative to the window
     x_spacing = (WINDOW_WIDTH / 2) - (image_size / 2) #i.e. distance from centre of screen to centre of image in order for the image to be against one side of the screen
