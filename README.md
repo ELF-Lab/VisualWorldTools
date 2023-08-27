@@ -1,12 +1,12 @@
 # Wiigwaas
 #### Experimental Linguistics & Fieldwork (ELF) Lab @ UBC
-Director: Dr. Chris Hammerly  
-Author: Anna Stacey  
+Director: [Dr. Chris Hammerly](https://github.com/christopherhammerly)  
+Author: [Anna Stacey](https://github.com/anna-stacey)
 
 ## Introduction
 Wiigwaas contains the necessary pieces for visual world eye-tracking experiments.  The experimental code is written in Python and run in [PsychoPy](https://www.psychopy.org).  We use a Tobii eyetracker (Tobii Pro Fusion), recording the gaze data in [Tobii Pro Lab](https://www.tobii.com/products/software/behavior-research-software/tobii-pro-lab) (TPL) via the [Titta](https://github.com/marcus-nystrom/Titta/tree/master) package.
 
-The experiment that this code was created for involves a number of pictures being displayed on the screen, audio being played, and the participant selecting one of the images.  This process repeats for the desired number of trials.  However, this code can be used as a starting point and can be modified to work with different experimental flows.
+The experiment that this code was created for involves a number of pictures being displayed on the screen, audio being played, and the participant selecting one of the images.  This process repeats for the desired number of trials.  However, this code was designed to be reuseable and can be used to create different experimental flows.  For this purpose, the repo is structured into modules (`display_resources.py`, `eye_tracking_resources.py`) which have reuseable functions that can be pieced together as you wish.  Then `wiigwaas.py` provides an example of how to construct an experiment using these pieces.  You may wish to use `wiigwaas.py` as a starting point, and modify it to create the specific experimental flow you're after.
 
 Currently, the code is designed to work with input from either a mouse or touch screen (tested using X monitor).  The code could be modified to work with other input sources, and indeed we are planning on adding Cedrus support in future.
 
@@ -29,6 +29,17 @@ As noted in the Titta docs, if you want to record in Tobii Pro Lab, there are a 
 5. When the experiment is done, swtich to the Analyze tab to view the recording.
 
 Note that if you are not changing the participant number each time you run the experiment, you will need to always be creating a new project or Tobii Pro Lab will complain that that participant already exists in the current project.
+
+### What happens in `wiigwaas.py`?
+This example experiment involves a brief set-up stage (including calibration), followed by repeated calls to `trial()`.  The flow of each trial, from the participant perspective, is as follows:
+1. Display a blank screen for a brief period.
+2. Display a buffer screen until the user clicks/taps.
+3. Display a fixation cross and perform a dritft check.
+    - If failed, recalibrate.
+4. Show the stimuli and play the audio.  At this point, there are a few different options for user input:
+    - A click/tap on a stimulus image leads to a box displayed around the selected image and an associated checkmark confirmation button appearing. Only one stimulus can be selected at a time, so a click/tap on a different image will move the box and checkmark.
+    - A click/tap on the repeat icon will make the audio replay.
+    - A click/tap on a checkmark button will confirm their choice and end this trial.
 
 ## `display_resources.py`
 This module contains functions related to what shows up on the screen.

@@ -72,37 +72,6 @@ def main():
 
     quit_experiment()
 
-
-# *** Functions used inside main() ***
-
-# Create output file to save data
-def create_output_file(subj_ID):
-    output_file = open("Wiigwaas-Exp-" + str(subj_ID) + ".txt", "w") # Open output file channel for editing
-    output_file.write('subj\ttrial\titem\tcond\tclicks\n') # Add header
-    return output_file
-
-def get_experimental_items(subjID):
-    EXP_ITEMS_FILE_NAME = 'experimentalItems-small.csv'
-    NUMBER_OF_LISTS = 4
-    
-    # Calculate current list based on subject number.
-    current_list = subjID % NUMBER_OF_LISTS + ((not subjID % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
-
-    # Get experimental items and randomize.
-    experimental_items = latin_square(current_list, EXP_ITEMS_FILE_NAME)
-    print(experimental_items)
-    return experimental_items
-
-# What happens in a trial?
-# - Determine the images to be displayed and the audio to be played
-# - Set image positions (randomly)
-# - Diplay the buffer and fixation cross screens
-# - Display the images
-# - Play the audio
-# - Await a mouse click in one of the images
-# - If such a click is received, also display the checkmark/box
-# - If a click is then received in a different image, move the checkmark/box
-# - If a click is then received in the checkmark, end the trial
 def trial(image_file_names, audio_file_name, main_window, mouse):
     CHECKMARK_SIZE = 100
     WAIT_TIME_BETWEEN_TRIALS = .75 # in seconds
@@ -185,6 +154,25 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
     positions = [image.pos for image in images]
     return positions, clicks
 
+# *** Functions used inside main() ***
+
+# Create output file to save data
+def create_output_file(subj_ID):
+    output_file = open("Wiigwaas-Exp-" + str(subj_ID) + ".txt", "w") # Open output file channel for editing
+    output_file.write('subj\ttrial\titem\tcond\tclicks\n') # Add header
+    return output_file
+
+def get_experimental_items(subjID):
+    EXP_ITEMS_FILE_NAME = 'experimentalItems-small.csv'
+    NUMBER_OF_LISTS = 4
+
+    # Calculate current list based on subject number.
+    current_list = subjID % NUMBER_OF_LISTS + ((not subjID % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
+
+    # Get experimental items and randomize.
+    experimental_items = latin_square(current_list, EXP_ITEMS_FILE_NAME)
+    print(experimental_items)
+    return experimental_items
 
 # *** Functions used inside trial() ***
 
