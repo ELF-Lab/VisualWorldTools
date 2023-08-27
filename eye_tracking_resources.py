@@ -10,6 +10,8 @@ tracker = None
 # Dictionary containing key-value pairs of screen names and media IDS, e.g. {"buffer": 8273891}
 media_info = None
 
+# Drift-check related constants, for specifying the acceptable fixation zone
+# These are not defined in-function, because it is called over and over
 # All measurements in pixels
 FIXATION_ZONE_SIZE = 40 # How far from the centre the gaze can be, either direction along both axes
 LEFT_FIXATION_BOUNDARY = WINDOW_WIDTH / 2 - FIXATION_ZONE_SIZE
@@ -17,11 +19,11 @@ RIGHT_FIXATION_BOUNDARY = WINDOW_WIDTH / 2 + FIXATION_ZONE_SIZE
 TOP_FIXATION_BOUNDARY = WINDOW_HEIGHT / 2 - FIXATION_ZONE_SIZE
 BOTTOM_FIXATION_BOUNDARY = WINDOW_HEIGHT / 2 + FIXATION_ZONE_SIZE
 
-def add_AOI(pro_lab_conection, display_name, aoi_name, aoi_color, vertices):
+def add_AOI(pro_lab_conection, display_name, AOI_name, AOI_colour, vertices):
     tag_name = 'test_tag'
     group_name = 'test_group'
 
-    pro_lab_conection.add_aois_to_image(media_info[display_name]['media_id'], aoi_name, aoi_color, vertices, tag_name = tag_name, group_name = group_name)
+    pro_lab_conection.add_aois_to_image(media_info[display_name]['media_id'], AOI_name, AOI_colour, vertices, tag_name = tag_name, group_name = group_name)
 
 # Tell TPL what image we're using during a gaze recording
 def add_image_to_recorder(pro_lab_conection, image_path, image_name):
