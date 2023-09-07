@@ -8,10 +8,10 @@ Wiigwaas contains the necessary pieces for visual world eye-tracking experiments
 
 The experiment that this code was created for involves a number of pictures being displayed on the screen, audio being played, and the participant selecting one of the images.  This process repeats for the desired number of trials.  However, this code was designed to be reuseable and can be used to create different experimental flows.  For this purpose, the repo is structured into modules (`display_resources.py`, `eye_tracking_resources.py`) which have reuseable functions that can be pieced together as you wish.  Then `wiigwaas.py` provides an example of how to construct an experiment using these pieces.  You may wish to use `wiigwaas.py` as a starting point, and modify it to create the specific experimental flow you're after.
 
-Currently, the code is designed to work with input from either a mouse or touch screen (tested using X monitor).  The code could be modified to work with other input sources, and indeed we are planning on adding Cedrus support in future.
+Currently, the code is designed to work with input from either a mouse or touch screen (tested using a [Phillips LCD Monitor with SmoothTouch](https://www.philips.ca/c-p/242B9T_27/monitor-lcd-monitor-with-smoothtouch)).  The code could be modified to work with other input sources, and indeed we are planning on adding Cedrus support in future.
 
 ## `wiigwaas.py`
-This is the code that manages the overall experimental flow.  It is specific to our example experiment, but provides an example of how to make use of the various functionality provided by the other modules.
+This file provides example code for how to manage the overall experimental flow.  Many aspects are specific to our example experiment, but provides an example of how to make use of the various functionality provided by the other modules. The experiment implements a three-image visual world study on relative clause processing in Ojibwe, which is based on the experimental design of [Hammerly, Staub, & Dillon (2022)](https://doi.org/10.1016/j.cognition.2022.105122).
 
 It's the control centre from which each trial is structured, but it doesn't contain any reuseable functions.
 
@@ -23,12 +23,12 @@ Open up `wiigwaas.py` in the Coder window of PsychoPy.  Hit the play button to r
 As noted in the Titta docs, if you want to record in Tobii Pro Lab, there are a few steps involved to get the software ready.
 1. Open Tobii Pro Lab.
 2. Create New Project > External Presenter Project
-    - You can name the project whatever; we just stick with the default numbered names.
+    - You can name the project whatever you like; we just stick with the default numbered names.
 3. Switch to the Record tab.  
 4. Now you can run the experiment from PsychoPy.
 5. When the experiment is done, swtich to the Analyze tab to view the recording.
 
-Note that if you are not changing the participant number each time you run the experiment, you will need to always be creating a new project or Tobii Pro Lab will complain that that participant already exists in the current project.
+Note that if you are not changing the participant number each time you run the experiment, you will need to always be creating a new project or Tobii Pro Lab will complain that that participant already exists in the current project. This ensures that existing data will not be overridden.
 
 ### What happens in `wiigwaas.py`?
 This example experiment involves a brief set-up stage (including calibration), followed by repeated calls to `trial()`.  The flow of each trial, from the participant perspective, is as follows:
@@ -39,7 +39,7 @@ This example experiment involves a brief set-up stage (including calibration), f
 4. Show the stimuli and play the audio.  At this point, there are a few different options for user input:
     - A click/tap on a stimulus image leads to a box displayed around the selected image and an associated checkmark confirmation button appearing. Only one stimulus can be selected at a time, so a click/tap on a different image will move the box and checkmark.
     - A click/tap on the repeat icon will make the audio replay.
-    - A click/tap on a checkmark button will confirm their choice and end this trial.
+    - A click/tap on a checkmark button will confirm their choice and end the current trial.
 
 ## `display_resources.py`
 This module contains functions related to what shows up on the screen.
