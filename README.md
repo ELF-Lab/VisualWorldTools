@@ -1,10 +1,10 @@
-# Wiigwaas
+# Visual World Tools
 #### Experimental Linguistics & Fieldwork (ELF) Lab @ UBC
 Director: [Dr. Chris Hammerly](https://github.com/christopherhammerly)  
 Author: [Anna Stacey](https://github.com/anna-stacey)
 
 ## Introduction
-Wiigwaas contains the necessary pieces for visual world eye-tracking experiments.  The experimental code is written in Python and run in [PsychoPy](https://www.psychopy.org).  We use a Tobii eyetracker (Tobii Pro Fusion), recording the gaze data in [Tobii Pro Lab](https://www.tobii.com/products/software/behavior-research-software/tobii-pro-lab) (TPL) via the [Titta](https://github.com/marcus-nystrom/Titta/tree/master) package.
+This repo contains the necessary pieces for visual world eye-tracking experiments.  The experimental code is written in Python and run in [PsychoPy](https://www.psychopy.org).  We use a Tobii eyetracker (Tobii Pro Fusion), recording the gaze data in [Tobii Pro Lab](https://www.tobii.com/products/software/behavior-research-software/tobii-pro-lab) (TPL) via the [Titta](https://github.com/marcus-nystrom/Titta/tree/master) package.
 
 The experiment that this code was created for involves a number of pictures being displayed on the screen, audio being played, and the participant selecting one of the images.  This process repeats for the desired number of trials.  However, this code was designed to be reuseable and can be used to create different experimental flows.  For this purpose, the repo is structured into modules (`display_resources.py`, `eye_tracking_resources.py`) which have reuseable functions that can be pieced together as you wish.  Then `wiigwaas.py` provides an example of how to construct an experiment using these pieces.  You may wish to use `wiigwaas.py` as a starting point, and modify it to create the specific experimental flow you're after.
 
