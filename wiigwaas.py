@@ -163,7 +163,7 @@ def create_output_file(subj_ID):
     return output_file
 
 def get_experimental_items(subjID):
-    EXP_ITEMS_FILE_NAME = 'experimentalItems-small.csv'
+    EXP_ITEMS_FILE_NAME = './experimental_items/experimental_items_small.csv'
     NUMBER_OF_LISTS = 4
 
     # Calculate current list based on subject number.
