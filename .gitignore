@@ -1,0 +1,6 @@
+Wiigwaas-Exp-*.txt
+validation_image*.png
+calibration_image*.png
+*.p
+__pycache__/
+Titta/
