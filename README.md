@@ -10,6 +10,11 @@ The experiment that this code was created for involves a number of pictures bein
 
 Currently, the code is designed to work with input from either a mouse or touch screen (tested using X monitor).  The code could be modified to work with other input sources, and indeed we are planning on adding Cedrus support in future.
 
+## Prerequisites
+This code requires the [Titta](https://github.com/marcus-nystrom/Titta/tree/master) package.  At present (because some changes we have made have not been made into pull requests yet), you need to install [our fork](https://github.com/ELF-Lab/Titta) of the package, and install it directly into your local `VisualWorldTools` directory (e.g., just using `git clone`).
+
+You may also need to set [configuration variables](#configpy) to suit your needs (e.g., specifying your screen dimensions).
+
 ## `wiigwaas.py`
 This is the code that manages the overall experimental flow.  It is specific to our example experiment, but provides an example of how to make use of the various functionality provided by the other modules.
 
