@@ -20,3 +20,5 @@ Exp,5,3,item5cond3,kiss1-agent.png,kiss1-patient.png,kiss1-distract.png,Comprehe
 Exp,5,4,item5cond4,kiss1-agent.png,kiss1-patient.png,kiss1-distract.png,Comprehension-5D.wav
 Filler,6,1,item45cond1,massage2-agent.png,massage2-patient.png,massage2-distract.png,Comprehension-45F.wav
 Filler,7,2,item46cond2,hug2-agent.png,hug2-patient.png,hug2-distract.png,Comprehension-46F.wav
+Practice,8,1,item7cond1,pinch1-agent.png,pinch1-patient.png,pinch1-distract.png,Comprehension-7A.wav
+Practice,9,4,item8cond4,thank1-agent.png,thank1-patient.png,thank1-distract.png,Comprehension-8D.wav

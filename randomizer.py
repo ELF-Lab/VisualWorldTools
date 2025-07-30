@@ -15,15 +15,11 @@ import csv, random, codecs, numpy
 # current_offset: Integer b/w 1 and the number of conditions
 #	E.g., if there's 4 possible conditions for each experimental item, permitted values are 1, 2, 3 or 4.
 #	This value determines what condition will be used for each experimental item for this run of the experiment.
-# item_file: path to CSV to be read
-#   The first column is expected to contain the stim type; "Exp" and "Filler" are currently supported,
-#	but it would be easy to add more e.g., sub-types of "Exp".
-def latin_square(current_offset, item_file):
-	# Load experimental_items file
-	with open(item_file) as csv_file: 
-		stim_file = csv.reader(csv_file)
-		stim_list = [item for item in stim_file]
-
+# stim_list: list of stim items (basically straight from from CSV, but first remove e.g., "Practice" items)
+#   Each stim[0] should be the stim_type, supported values are
+#	1) "Filler" = Filler items, or
+#	2) Anything beginning with "Exp" = Experimental items
+def latin_square(current_offset, stim_list):
 	# Organize into dictionary, where the keys are "Exp", "Filler", etc. (column 1),
 	# and the values are lists containing all the items of that kind.
 	stim_dictionary = {}
@@ -96,7 +92,7 @@ def latin_square(current_offset, item_file):
 	# Safety checks
 	# Ensure that each item/cond matching is as expected based on participant
 	for row in experimental_list:
-		if (row[0] == 'Exp'): # The check isn't relevant for filler rows
+		if (row[0].startswith('Exp')): # The check isn't relevant for filler rows
 			item_number = int(row[1])
 			condition_number = int(row[2])
 			# Remember that the values of current_offset range from 1 to the number of conditions

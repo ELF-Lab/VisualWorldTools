@@ -1,4 +1,5 @@
-from random import randint
+import csv
+from random import shuffle
 from pathlib import *
 from psychopy import core, event, monitors, sound, visual
 from randomizer import latin_square
@@ -54,7 +55,7 @@ def main():
 
     # Run trials!
     for trial_number, item_info in enumerate(experimental_items):
-        print(trial_number, item_info)
+        print("\nTrial number:", trial_number, "\nTrial info:", item_info)
         # By specifying the image file names, you also specify how many images we're using!
         image_file_names = [item_info[4], item_info[5], item_info[6]]
         # Check that the number of images provided is supported
@@ -62,7 +63,7 @@ def main():
             print(f"\nERROR: Unsupported number of images ({len(image_file_names)}).  Supported numbers are {SUPPORTED_IMAGE_NUMBERS}.\n")
             quit_experiment()
         audio_file_name = item_info[7]
-        print(image_file_names)
+        print("Trial images:", image_file_names)
         
         response = trial(image_file_names, audio_file_name, main_window, mouse)
                 
@@ -168,10 +169,26 @@ def get_experimental_items(subjID):
 
     # Use subject number to get a sort-of random offset used to determine the conditions for each experimental item.
     current_offset = subjID % NUMBER_OF_CONDITIONS + ((not subjID % NUMBER_OF_CONDITIONS) * NUMBER_OF_CONDITIONS)
+	
+    # Load experimental_items file
+    with open(EXP_ITEMS_FILE_NAME) as csv_file: 
+        stim_file = csv.reader(csv_file)
+        stim_list = [item for item in stim_file]
+    
+    experimental_items = []
+    # First, get practice items to the beginning
+    stim_list_sans_practice = []
+    for stim in stim_list:
+        stim_type = stim[0]
+        if stim_type == "Practice":
+            experimental_items.append(stim)
+        else: # Filler and real experimental items
+            stim_list_sans_practice.append(stim)
+    shuffle(experimental_items) # Randomize order of practice trials
 
-    # Get experimental items and randomize.
-    experimental_items = latin_square(current_offset, EXP_ITEMS_FILE_NAME)
-    print(experimental_items)
+    # Randomize the filler/experimental items
+    experimental_items.extend(latin_square(current_offset, stim_list_sans_practice))
+    print("All trials:", experimental_items)
     return experimental_items
 
 # *** Functions used inside trial() ***
