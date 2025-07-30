@@ -54,8 +54,15 @@ def main():
     display_buffer_screen(recorder, main_window, mouse, 'Boozhoo! Biindigen.', quit_experiment)
 
     # Run trials!
+    practice_complete = False
     for trial_number, item_info in enumerate(experimental_items):
         print("\nTrial number:", trial_number, "\nTrial info:", item_info)
+
+        # At the end of the practice session, notify the participant
+        if not(practice_complete) and item_info[0] != "Practice":
+            practice_complete = True
+            display_buffer_screen(recorder, main_window, mouse, 'Here is my end-of-practice text.', quit_experiment)
+
         # By specifying the image file names, you also specify how many images we're using!
         image_file_names = [item_info[4], item_info[5], item_info[6]]
         # Check that the number of images provided is supported
