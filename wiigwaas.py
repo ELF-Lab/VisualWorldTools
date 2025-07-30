@@ -164,13 +164,13 @@ def create_output_file(subj_ID):
 
 def get_experimental_items(subjID):
     EXP_ITEMS_FILE_NAME = './experimental_items/experimental_items_small.csv'
-    NUMBER_OF_LISTS = 4
+    NUMBER_OF_CONDITIONS = 4
 
-    # Calculate current list based on subject number.
-    current_list = subjID % NUMBER_OF_LISTS + ((not subjID % NUMBER_OF_LISTS) * NUMBER_OF_LISTS)
+    # Use subject number to get a sort-of random offset used to determine the conditions for each experimental item.
+    current_offset = subjID % NUMBER_OF_CONDITIONS + ((not subjID % NUMBER_OF_CONDITIONS) * NUMBER_OF_CONDITIONS)
 
     # Get experimental items and randomize.
-    experimental_items = latin_square(current_list, EXP_ITEMS_FILE_NAME)
+    experimental_items = latin_square(current_offset, EXP_ITEMS_FILE_NAME)
     print(experimental_items)
     return experimental_items
 
