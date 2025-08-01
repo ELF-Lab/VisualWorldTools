@@ -88,7 +88,8 @@ def _compare_gaze_and_target(main_window):
 # We need to tell TPL when we're done with the relevant display
 def finish_display(start_time, display_name, pro_lab_conection):
     end_time = int((pro_lab_conection.get_time_stamp())['timestamp'])
-    pro_lab_conection.send_stimulus_event(recording_ID, start_timestamp = str(start_time), media_id = media_info[display_name]['media_id'], end_timestamp = end_time)
+    if recording_ID: # If there's a relevant recording!
+        pro_lab_conection.send_stimulus_event(recording_ID, start_timestamp = str(start_time), media_id = media_info[display_name]['media_id'], end_timestamp = end_time)
     return end_time
 
 def record_event(pro_lab_conection, event_description):
