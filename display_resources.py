@@ -1,6 +1,8 @@
 from random import randint
 from pathlib import *
 from psychopy import core, event, gui, visual
+from psychopy.constants import (PLAYING, PAUSED, FINISHED, STOPPED,
+                                NOT_STARTED)
 from config import *
 # Ideally we should minimze imports from here, but there is some overlap between what's on screen and what TPL needs to know.
 from eye_tracking_resources import finish_display, record_event
@@ -230,7 +232,8 @@ def listen_for_repeat(repeat_icon, prev_mouse_location, audio, trial_clock, clic
 def play_sound(audio, recorder):
     if EYETRACKING_ON:
         record_event(recorder, "AudioStart")
-    audio.play()
+    if audio.status != PLAYING:
+        audio.play()
 
     # Note that setPos defines the position of the image's /centre/, and screen positions are determined based on the /centre/ of the screen being (0,0)
 def set_image_positions(image_size, checkmark_size, images, checkmarks, repeat_icon, IMAGE_OFFSET_FROM_EDGE):
