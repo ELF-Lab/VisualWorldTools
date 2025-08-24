@@ -1,3 +1,4 @@
+item_type,item_number,condition_number,item_and_condition_numbers,image_1_agent,image_2_patient,image_3_distractor,audio
 Exp,1,1,item1cond1,brush1-agent.png,brush1-patient.png,brush1-distract.png,Comprehension-1A.wav
 Exp,1,2,item1cond2,brush1-agent.png,brush1-patient.png,brush1-distract.png,Comprehension-1B.wav
 Exp,1,3,item1cond3,brush1-agent.png,brush1-patient.png,brush1-distract.png,Comprehension-1C.wav
@@ -18,7 +19,7 @@ Exp,5,1,item5cond1,kiss1-agent.png,kiss1-patient.png,kiss1-distract.png,Comprehe
 Exp,5,2,item5cond2,kiss1-agent.png,kiss1-patient.png,kiss1-distract.png,Comprehension-5B.wav
 Exp,5,3,item5cond3,kiss1-agent.png,kiss1-patient.png,kiss1-distract.png,Comprehension-5C.wav
 Exp,5,4,item5cond4,kiss1-agent.png,kiss1-patient.png,kiss1-distract.png,Comprehension-5D.wav
-Filler,6,1,item45cond1,massage2-agent.png,massage2-patient.png,massage2-distract.png,Comprehension-45F.wav
-Filler,7,2,item46cond2,hug2-agent.png,hug2-patient.png,hug2-distract.png,Comprehension-46F.wav
-Practice,8,1,item7cond1,pinch1-agent.png,pinch1-patient.png,pinch1-distract.png,Comprehension-7A.wav
-Practice,9,4,item8cond4,thank1-agent.png,thank1-patient.png,thank1-distract.png,Comprehension-8D.wav
+Filler,6,1,item6cond1,massage2-agent.png,massage2-patient.png,massage2-distract.png,Comprehension-45F.wav
+Filler,7,2,item7cond2,hug2-agent.png,hug2-patient.png,hug2-distract.png,Comprehension-46F.wav
+Practice,8,1,item8cond1,pinch1-agent.png,pinch1-patient.png,pinch1-distract.png,Comprehension-7A.wav
+Practice,9,4,item9cond4,thank1-agent.png,thank1-patient.png,thank1-distract.png,Comprehension-8D.wav

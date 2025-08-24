@@ -1,3 +1,4 @@
+item_type,item_number,condition_number,item_and_condition_numbers,image_1_agent,image_2_patient,image_3_distractor,audio
 Exp,1,1,item1cond1,brush1-agent.png,brush1-patient.png,brush1-distract.png,Comprehension-1A.wav
 Exp,1,2,item1cond2,brush1-agent.png,brush1-patient.png,brush1-distract.png,Comprehension-1B.wav
 Exp,1,3,item1cond3,brush1-agent.png,brush1-patient.png,brush1-distract.png,Comprehension-1C.wav

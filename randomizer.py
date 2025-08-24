@@ -24,7 +24,7 @@ def latin_square(current_offset, stim_list):
 	# and the values are lists containing all the items of that kind.
 	stim_dictionary = {}
 	for item in stim_list:
-		stim_dictionary.setdefault(item[0], []).append(item[1:])
+		stim_dictionary.setdefault(item["item_type"], []).append(item)
 	
 	# Create dictionary to hold experimental items; subset of stimulus dictionary that contains appropriate latin square list.
 	experimental_items = {}
@@ -40,7 +40,7 @@ def latin_square(current_offset, stim_list):
 	# If you just have "Exp" and "Filler", this is only run once as "Filler" has been removed
 	for stim_type in stim_types_sans_filler:
 		# Get number of conditions (max. value from the condition # column)
-		number_of_conditions = int(max([item[1] for item in stim_dictionary[stim_type]]))
+		number_of_conditions = int(max([item["condition_number"] for item in stim_dictionary[stim_type]]))
 		# Check that the provided value for current_offset is within the expected range
 		assert current_offset <= number_of_conditions, f"Value for current_offset ({current_offset}) in latin_square is higher than permissible (> {number_of_conditions})."
 		assert current_offset > 0, f"Value for current_offset ({current_offset}) in latin_square is lower than permissible (<1)."
@@ -58,7 +58,7 @@ def latin_square(current_offset, stim_list):
 		# Once we have a list of tuples that are the current experimental items
 		# then include an item in the stim dictionary in the experimental item dictionary if it is in the current_items list
 		for item in stim_dictionary[stim_type]:
-			if tuple(item[0:2]) in current_items:
+			if (item["item_number"], item["condition_number"]) in current_items:
 				experimental_items.setdefault(stim_type,[]).append(item)
 
 	# Shuffle sub-lists within the experimental_items dictionary (e.g., shuffle the "Filler" items amongst themselves)
@@ -77,7 +77,7 @@ def latin_square(current_offset, stim_list):
 			continue
 		else:
 			if len(experimental_items[current_stim_type]) > 0:
-				experimental_list.append([current_stim_type] + experimental_items[current_stim_type].pop())
+				experimental_list.append((experimental_items[current_stim_type].pop()))
 				prev_stim_type = current_stim_type
 			else:
 				remaining_stim_types.remove(current_stim_type)
@@ -87,14 +87,14 @@ def latin_square(current_offset, stim_list):
 	
 	# Randomly insert remaining ("Filler") items
 	for item in experimental_items[remaining_stim_types[0]]:
-		experimental_list.insert(random.randrange(len(experimental_list) + 1),[remaining_stim_types[0]] + item)
+		experimental_list.insert(random.randrange(len(experimental_list) + 1), item)
 
 	# Safety checks
 	# Ensure that each item/cond matching is as expected based on participant
-	for row in experimental_list:
-		if (row[0].startswith('Exp')): # The check isn't relevant for filler rows
-			item_number = int(row[1])
-			condition_number = int(row[2])
+	for exp_item in experimental_list:
+		if (exp_item["item_type"].startswith('Exp')): # The check isn't relevant for filler rows
+			item_number = int(exp_item["item_number"])
+			condition_number = int(exp_item["condition_number"])
 			# Remember that the values of current_offset range from 1 to the number of conditions
 			expected_condition_number = ((item_number % number_of_conditions) + current_offset - 1) % number_of_conditions
 			if expected_condition_number == 0:

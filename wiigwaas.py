@@ -59,23 +59,24 @@ def main():
         print("\nTrial number:", trial_number, "\nTrial info:", item_info)
 
         # At the end of the practice session, notify the participant
-        if not(practice_complete) and item_info[0] != "Practice":
+        if not(practice_complete) and item_info["item_type"] != "Practice":
             practice_complete = True
             display_buffer_screen(recorder, main_window, mouse, 'Here is my end-of-practice text.', quit_experiment)
 
-        # By specifying the image file names, you also specify how many images we're using!
-        image_file_names = [item_info[4], item_info[5], item_info[6]]
+        # Reading from all .csv columns that start with "image" means we auto-detect different numbers of images
+        image_file_names = [item_info[key] for key in item_info.keys() if key.startswith("image")]
         # Check that the number of images provided is supported
         if len(image_file_names) not in SUPPORTED_IMAGE_NUMBERS:
             print(f"\nERROR: Unsupported number of images ({len(image_file_names)}).  Supported numbers are {SUPPORTED_IMAGE_NUMBERS}.\n")
             quit_experiment()
-        audio_file_name = item_info[7]
+        audio_file_name = item_info["audio"]
         print("Trial images:", image_file_names)
         
         response = trial(image_file_names, audio_file_name, main_window, mouse)
                 
-        #Record the data from the last trial
-        output_file.write(str(subjID)+"\t"+str(trial_number)+"\t"+str(item_info[1])+"\t"+str(item_info[2])+"\t"+str(response)+"\n")
+        # Record the data from the last trial
+        output_line_contents = [str(subjID), str(trial_number), str(item_info["item_number"]), str(item_info["condition_number"]), str(response) + "\n"]
+        output_file.write("\t".join(output_line_contents))
         output_file.flush()
 
     quit_experiment()
@@ -177,16 +178,16 @@ def get_experimental_items(subjID):
     # Use subject number to get a sort-of random offset used to determine the conditions for each experimental item.
     current_offset = subjID % NUMBER_OF_CONDITIONS + ((not subjID % NUMBER_OF_CONDITIONS) * NUMBER_OF_CONDITIONS)
 	
-    # Load experimental_items file
+    # Load experimental_items file (store its contents as a list of rows-as-dictionaries)
     with open(EXP_ITEMS_FILE_NAME) as csv_file: 
-        stim_file = csv.reader(csv_file)
+        stim_file = csv.DictReader(csv_file)
         stim_list = [item for item in stim_file]
     
     experimental_items = []
     # First, get practice items to the beginning
     stim_list_sans_practice = []
     for stim in stim_list:
-        stim_type = stim[0]
+        stim_type = stim["item_type"]
         if stim_type == "Practice":
             experimental_items.append(stim)
         else: # Filler and real experimental items
