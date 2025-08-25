@@ -1,4 +1,4 @@
-from random import randint
+from random import shuffle
 from pathlib import *
 from psychopy import core, event, gui, visual
 from psychopy.constants import (PLAYING, PAUSED, FINISHED, STOPPED,
@@ -162,19 +162,6 @@ def get_images(image_file_names, image_size, checkmark_size, repeat_icon_size, m
 
     return images, checkmarks, repeat_icon, selection_box
 
-def get_random_image_order(number_of_images):
-    # We can think of the images as each having a number index, e.g. with three images, agent = 0, patient = 1, distractor = 2
-    # So the images are numbered 0 through numImages - 1. We want a list that tells us their order.
-    # So we want to randomize the order of the numbers 0 through numImages - 1.
-    ordered_list = list(range(0, number_of_images)) # A list of all the image indexes, but in ascending order
-    randomly_ordered_list = []
-
-    for i in range(0, number_of_images):
-       random_num = randint(0, len(ordered_list) - 1) # Choose randomly, from however many numbers we have left to choose
-       randomly_ordered_list.append(ordered_list.pop(random_num))
-
-    return randomly_ordered_list
-
 def handle_input_on_stimulus(selected_image, images, checkmarks, selection_box, repeat_icon, trial_clock, clicks, recorder, main_window):
     assert(selected_image != None)
     number_of_images = len(images)
@@ -254,9 +241,6 @@ def set_image_positions(image_size, checkmark_size, images, checkmarks, repeat_i
     # Position the checkmarks just above/below the image. This offset should be added/subtracted from the corresponding image's position.
     checkmark_offset = image_size / 2 + checkmark_size / 2
 
-    # Randomly determine the images' order (and therfore, positions)
-    random_ordering_of_images = get_random_image_order(number_of_images)
-
     # Determine the image positions we'll be using, based on the # of images
     ONE_POSITION = [[centre, centre]]
     TWO_POSITIONS = [[left, centre], [right, centre]]
@@ -271,11 +255,12 @@ def set_image_positions(image_size, checkmark_size, images, checkmarks, repeat_i
     assert number_of_images in POSITION_LISTS.keys()
     image_positions = POSITION_LISTS[number_of_images]
 
-    # Now set their positions based on that random order!
-    for i, image_position in enumerate(image_positions):
-        images[random_ordering_of_images[i]].setPos(image_position)
+    # Now randomize the order of positions, and apply them to the images (and their corresponding checkmark)
+    shuffle(image_positions)
+    for image, checkmark, image_position in zip(images, checkmarks, image_positions):
+        image.setPos(image_position)
         # Put the check below the image UNLESS the image is already at the bottom of the screen, in which case put the check above the image
-        checkmarks[random_ordering_of_images[i]].setPos([image_position[0], image_position[1] - checkmark_offset if image_position[1] != bottom else image_position[1] + checkmark_offset])
+        checkmark.setPos([image_position[0], image_position[1] - checkmark_offset if image_position[1] != bottom else image_position[1] + checkmark_offset])
 
     return images, checkmarks, repeat_icon
 
