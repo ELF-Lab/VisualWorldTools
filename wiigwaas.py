@@ -75,7 +75,7 @@ def main():
         image_positions, clicks = trial(image_file_names, audio_file_name, main_window, mouse)
 
         # Record the data from the last trial
-        output_line_contents = [str(subjID), str(trial_number), str(item_info["item_number"]), str(item_info["condition_number"]), str(image_positions), str(clicks) + "\n"]
+        output_line_contents = [str(subjID), str(trial_number), str(item_info["item_type"]), str(item_info["item_number"]), str(item_info["condition_number"]), str(image_positions), str(clicks) + "\n"]
         output_file.write("\t".join(output_line_contents))
         output_file.flush()
 
@@ -166,7 +166,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
 
 # Create output file to save data
 def create_output_file(subj_ID):
-    COLUMNS = ["subj", "trial", "item", "condition", "image_positions", "clicks\n"]
+    COLUMNS = ["subj", "trial", "trial_type", "item", "condition", "image_positions", "clicks\n"]
     output_file = open("Wiigwaas-Exp-" + str(subj_ID) + ".tsv", "w") # Open output file channel for editing
     output_file.write("\t".join(COLUMNS)) # Add header
     return output_file
