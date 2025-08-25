@@ -72,10 +72,10 @@ def main():
         audio_file_name = item_info["audio"]
         print("Trial images:", image_file_names)
         
-        response = trial(image_file_names, audio_file_name, main_window, mouse)
+        image_positions, clicks = trial(image_file_names, audio_file_name, main_window, mouse)
                 
         # Record the data from the last trial
-        output_line_contents = [str(subjID), str(trial_number), str(item_info["item_number"]), str(item_info["condition_number"]), str(response) + "\n"]
+        output_line_contents = [str(subjID), str(trial_number), str(item_info["item_number"]), str(item_info["condition_number"]), str(image_positions), str(clicks) + "\n"]
         output_file.write("\t".join(output_line_contents))
         output_file.flush()
 
@@ -86,7 +86,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
     WAIT_TIME_BETWEEN_TRIALS = .75 # in seconds
     WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI = .1
     WAIT_TIME_BEFORE_RECALIBRATING = 3
-    WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO = 4
+    WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO = 0
     BUFFER_TEXT = 'Tanganan wii-majitaayan\n mezhinaatebiniwemagak.'
     
     trial_clock = core.Clock()
@@ -119,7 +119,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
     
     # Display the images, and then pause before the audio is played
     display_stimuli_screen(recorder, main_window, images + [repeat_icon])
-    # core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
+    core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
           
     # Prepare for clicks, play the audio file, and start the timer - the user may interact starting now!
     clear_clicks_and_events(mouse)
@@ -160,15 +160,16 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
     response = ["checkmark", trial_duration]
     clicks.append(response)
 
-    positions = [image.pos for image in images]
-    return positions, clicks
+    image_positions = [image.pos for image in images]
+    return image_positions, clicks
 
 # *** Functions used inside main() ***
 
 # Create output file to save data
 def create_output_file(subj_ID):
-    output_file = open("Wiigwaas-Exp-" + str(subj_ID) + ".txt", "w") # Open output file channel for editing
-    output_file.write('subj\ttrial\titem\tcond\tclicks\n') # Add header
+    COLUMNS = ["subj", "trial", "item", "condition", "image_positions", "clicks\n"]
+    output_file = open("Wiigwaas-Exp-" + str(subj_ID) + ".tsv", "w") # Open output file channel for editing
+    output_file.write("\t".join(COLUMNS)) # Add header
     return output_file
 
 def get_experimental_items(subjID):
