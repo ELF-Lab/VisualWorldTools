@@ -153,7 +153,7 @@ def get_images(image_file_names, image_size, checkmark_size, repeat_icon_size, m
     images = []
     checkmarks = []
     for i in range(0, number_of_images):
-        images.append(visual.ImageStim(win = main_window, image = Path.cwd()/"visualStims"/str(image_file_names[i]), units = "pix", size = image_size))
+        images.append(visual.ImageStim(win = main_window, image = Path.cwd()/"visualStims"/str(image_file_names[i]), units = "pix", size = image_size, name = image_file_names[i]))
         checkmarks.append(visual.ImageStim(win = main_window, image = Path.cwd()/"icons"/"checkmark.png", units = "pix", size = checkmark_size))
 
     repeat_icon = visual.ImageStim(win = main_window, image = Path.cwd()/"icons"/"repeat.png", units = "pix", size = repeat_icon_size)
@@ -222,7 +222,7 @@ def play_sound(audio, recorder):
     if audio.status != PLAYING:
         audio.play()
 
-    # Note that setPos defines the position of the image's /centre/, and screen positions are determined based on the /centre/ of the screen being (0,0)
+# Note that setPos defines the position of the image's /centre/, and screen positions are determined based on the /centre/ of the screen being (0,0)
 def set_image_positions(image_size, checkmark_size, images, checkmarks, repeat_icon, IMAGE_OFFSET_FROM_EDGE):
     number_of_images = len(images)
 
@@ -241,11 +241,15 @@ def set_image_positions(image_size, checkmark_size, images, checkmarks, repeat_i
     # Position the checkmarks just above/below the image. This offset should be added/subtracted from the corresponding image's position.
     checkmark_offset = image_size / 2 + checkmark_size / 2
 
+    # Using human-readable names for the positions.
+    # Horizontally: left, centre, right
+    # Vertically: top, centre, bottom
+    POSITION_COORDINATES = {"left_top": [left, top], "left_centre": [left, centre], "left_bottom": [left, bottom], "centre_top": [centre, top], "centre_centre": [centre, centre], "centre_bottom": [centre, bottom], "right_top": [right, top], "right_centre": [right, centre], "right_bottom": [right, bottom]}
     # Determine the image positions we'll be using, based on the # of images
-    ONE_POSITION = [[centre, centre]]
-    TWO_POSITIONS = [[left, centre], [right, centre]]
-    THREE_POSITIONS = [[left, top], [right, top], [centre, bottom]]
-    FOUR_POSITIONS = [[left, top], [right, top], [left, bottom], [right, bottom]]
+    ONE_POSITION = ["centre_centre"]
+    TWO_POSITIONS = ["left_centre", "right_centre"]
+    THREE_POSITIONS = ["left_top", "right_top", "centre_bottom"]
+    FOUR_POSITIONS = ["left_top", "right_top", "left_bottom", "right_bottom"]
     POSITION_LISTS = {
         1: ONE_POSITION,
         2: TWO_POSITIONS,
@@ -257,12 +261,15 @@ def set_image_positions(image_size, checkmark_size, images, checkmarks, repeat_i
 
     # Now randomize the order of positions, and apply them to the images (and their corresponding checkmark)
     shuffle(image_positions)
+    image_position_info_to_print = {}
     for image, checkmark, image_position in zip(images, checkmarks, image_positions):
-        image.setPos(image_position)
+        current_pos_coords = POSITION_COORDINATES[image_position]
+        image.setPos(current_pos_coords)
+        image_position_info_to_print.update({image.name: image_position})
         # Put the check below the image UNLESS the image is already at the bottom of the screen, in which case put the check above the image
-        checkmark.setPos([image_position[0], image_position[1] - checkmark_offset if image_position[1] != bottom else image_position[1] + checkmark_offset])
+        checkmark.setPos([current_pos_coords[0], current_pos_coords[1] - checkmark_offset if current_pos_coords[1] != bottom else current_pos_coords[1] + checkmark_offset])
 
-    return images, checkmarks, repeat_icon
+    return images, checkmarks, repeat_icon, image_position_info_to_print
 
 # Either the new or current display can be None, indicating this is the last or first display
 # If new_display_name = None, we only finish with the previous display, we don't add a new one

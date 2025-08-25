@@ -97,7 +97,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
     # Get the relevant images
     images, checkmarks, repeat_icon, selection_box = get_images(image_file_names, IMAGE_SIZE, CHECKMARK_SIZE, REPEAT_ICON_SIZE, main_window)
     # Determine the position of each image
-    images, checkmarks, repeat_icon = set_image_positions(IMAGE_SIZE, CHECKMARK_SIZE, images, checkmarks, repeat_icon, IMAGE_OFFSET_FROM_EDGE)
+    images, checkmarks, repeat_icon, image_positions = set_image_positions(IMAGE_SIZE, CHECKMARK_SIZE, images, checkmarks, repeat_icon, IMAGE_OFFSET_FROM_EDGE)
 
     # *** BEGIN TRIAL ***
     # Add a wait time before the start of each new trial, with a blank screen
@@ -160,7 +160,6 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
     response = ["checkmark", trial_duration]
     clicks.append(response)
 
-    image_positions = [image.pos for image in images]
     return image_positions, clicks
 
 # *** Functions used inside main() ***
