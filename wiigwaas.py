@@ -39,7 +39,7 @@ def main():
     output_file = create_output_file(subjID)
     experimental_items = get_experimental_items(subjID)
     clear_clicks_and_events(mouse)
-    
+
     # Setting up the gaze recorder takes a few seconds, so let's begin displaying a loading screen here!
     display_text_screen(None, main_window, "Setting up...", None)
     if EYETRACKING_ON:
@@ -71,9 +71,9 @@ def main():
             quit_experiment()
         audio_file_name = item_info["audio"]
         print("Trial images:", image_file_names)
-        
+
         image_positions, clicks = trial(image_file_names, audio_file_name, main_window, mouse)
-                
+
         # Record the data from the last trial
         output_line_contents = [str(subjID), str(trial_number), str(item_info["item_number"]), str(item_info["condition_number"]), str(image_positions), str(clicks) + "\n"]
         output_file.write("\t".join(output_line_contents))
@@ -88,7 +88,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
     WAIT_TIME_BEFORE_RECALIBRATING = 3
     WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO = 0
     BUFFER_TEXT = 'Tanganan wii-majitaayan\n mezhinaatebiniwemagak.'
-    
+
     trial_clock = core.Clock()
 
     # Get the audio to be played for the given trial.
@@ -103,7 +103,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
     # Add a wait time before the start of each new trial, with a blank screen
     display_blank_screen(recorder, main_window)
     core.wait(WAIT_TIME_BETWEEN_TRIALS)
-    
+
     # Display screen between trials so participant can indicate when ready
     display_buffer_screen(recorder, main_window, mouse, BUFFER_TEXT, quit_experiment)
 
@@ -116,11 +116,11 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
             calibrate_recorder(main_window, mouse, recorder)
         # Pause between displaying the fixation cross and displaying the stimuli
         core.wait(WAIT_TIME_BETWEEN_FIXATION_AND_STIMULI)
-    
+
     # Display the images, and then pause before the audio is played
     display_stimuli_screen(recorder, main_window, images + [repeat_icon])
     core.wait(WAIT_TIME_BETWEEN_STIMULI_AND_AUDIO)
-          
+
     # Prepare for clicks, play the audio file, and start the timer - the user may interact starting now!
     clear_clicks_and_events(mouse)
     clicks = []
@@ -142,11 +142,11 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
     # Now we wait in this loop until the checkmark is ultimately clicked
     checkmark_clicked = False
     while not checkmark_clicked:
-        
+
         # Always be listening for a command to quit the program, or repeat the audio  
         listen_for_quit(quit_experiment)
         prev_mouse_location = listen_for_repeat(repeat_icon, prev_mouse_location, audio, trial_clock, clicks, mouse, recorder)
-        
+
         # Always listening for a click on an image
         image_clicked, prev_mouse_location = check_for_input_on_images(mouse, images, prev_mouse_location)
         if image_clicked:
@@ -154,7 +154,7 @@ def trial(image_file_names, audio_file_name, main_window, mouse):
 
         # Always listening for a click on the checkmark
         checkmark_clicked, prev_mouse_location = check_for_input_on_images(mouse, [checkmark], prev_mouse_location)
-           
+
     # Once we reach here, the check has been clicked (i.e. the trial is over)
     trial_duration = trial_clock.getTime()
     response = ["checkmark", trial_duration]
@@ -178,12 +178,12 @@ def get_experimental_items(subjID):
 
     # Use subject number to get a sort-of random offset used to determine the conditions for each experimental item.
     current_offset = subjID % NUMBER_OF_CONDITIONS + ((not subjID % NUMBER_OF_CONDITIONS) * NUMBER_OF_CONDITIONS)
-	
+
     # Load experimental_items file (store its contents as a list of rows-as-dictionaries)
     with open(EXP_ITEMS_FILE_NAME) as csv_file: 
         stim_file = csv.DictReader(csv_file)
         stim_list = [item for item in stim_file]
-    
+
     experimental_items = []
     # First, get practice items to the beginning
     stim_list_sans_practice = []
@@ -240,7 +240,7 @@ def add_images_to_recorder():
 # This is used inside both main and trial (as the user may quit during a trial)
 def quit_experiment():
     display_text_screen(recorder, main_window, "Quitting...", None)
-    
+
     # Quit gracefully
     if EYETRACKING_ON:
         stop_recording_gaze(recorder)
