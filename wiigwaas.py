@@ -61,7 +61,7 @@ def main():
         # At the end of the practice session, notify the participant
         if not(practice_complete) and item_info["item_type"] != "Practice":
             practice_complete = True
-            display_buffer_screen(recorder, main_window, mouse, 'Here is my end-of-practice text.', quit_experiment)
+            display_buffer_screen(recorder, main_window, mouse, 'Daanginan majitaayan.', quit_experiment)
 
         # Reading from all .csv columns that start with "image" means we auto-detect different numbers of images
         image_file_names = [item_info[key] for key in item_info.keys() if key.startswith("image")]
